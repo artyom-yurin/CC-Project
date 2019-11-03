@@ -1,0 +1,4 @@
+routine main() {
+    array a[5];
+    type x is integer;
+}
