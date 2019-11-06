@@ -12,6 +12,7 @@
 %token MULT_SIGN DIV_SIGN MOD_SIGN
 %token PLUS_SIGN MINUS_SIGN
 %token TRUE FALSE REAL_LITERAL INTEGER_LITERAL
+%token RETURN
 
 %start program
 // {} group elements that can be repeated 0 or more times
@@ -44,9 +45,8 @@ type_declaration
     : TYPE IDENTIFIER IS type
     ;
 
-// empty parameters
 routine_declaration
-    : ROUTINE IDENTIFIER '(' parameters ')' routine_return_type IS body END
+    : ROUTINE IDENTIFIER '(' routine_parameters ')' routine_return_type IS body END
     ;
 
 routine_return_type
@@ -54,12 +54,16 @@ routine_return_type
     | ':' type
     ;
 
+routine_parameters
+    :
+    | parameters
+    ;
+
 parameters
     : parameters ',' parameter_declaration
     | parameter_declaration
     ;
 
-// maybe should be IDENTIFIER : type
 parameter_declaration
     : IDENTIFIER ':' IDENTIFIER
     ;
@@ -102,6 +106,16 @@ statement
     | while_loop
     | for_loop
     | if_statement
+    | return
+    ;
+
+return
+    : RETURN return_value
+    ;
+
+return_value
+    :
+    | expression
     ;
 
 assignment
@@ -109,13 +123,12 @@ assignment
     ;
 
 routine_call
-    : IDENTIFIER arguments
+    : IDENTIFIER '(' arguments ')'
     ;
 
-// maybe call with empty brackets
 arguments
     :
-    | '(' expressions ')'
+    | expressions
     ;
 
 expressions
