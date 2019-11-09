@@ -1,5 +1,5 @@
 #include "Lexer.hpp"
-#include "yacc.hpp"
+#include "../yacc.hpp"
 
 
 Lexer::Lexer(std::string src) {
@@ -11,7 +11,7 @@ Lexer::Lexer(std::string src) {
 
 
 Token Lexer::next() {
-    Token token = new Token(0, EOF);
+    Token token(0, "");
 
     while (src_iter != src.end()) {
         if (*src_iter == ' ' || *src_iter == '\t') {
@@ -39,14 +39,14 @@ void Lexer::createSymbolTable() {
         {"array", ARRAY}, {"while", WHILE},
         {"loop", LOOP}, {"for", FOR},
         {"in", IN}, {"reverse", REVERSE},
-        {"from", FROM}, {"return", RETURN},
+        {"return", RETURN},
         {"if", IF}, {"then", THEN},
         {"else", ELSE}, {"and", AND},
         {"or", OR}, {"xor", XOR},
     };
 
-    std::int identifiers[] = {
-        INTEGER, REAL, BOOLEAN,
+    std::string identifiers[] = {
+        "integer", "real", "boolean",
     };
 
     for (auto keyword : keywords)
@@ -116,7 +116,7 @@ Token Lexer::parseIdentifier() {
         src_iter++;
     }
 
-    ClassName class_name = symbol_table.find(value);
+    int class_name = symbol_table.find(value);
 
     if (class_name == -1) {
         class_name = IDENTIFIER;
@@ -131,7 +131,7 @@ Token Lexer::parseIdentifier() {
 
 
 Token Lexer::parseOtherSymbol() {
-    Token token = Token(ClassName::None, "");
+    Token token = Token(-1, "");
 
     if (*src_iter == '+') {
         token.value = "+";
@@ -181,7 +181,7 @@ Token Lexer::parseOtherSymbol() {
     }
     else if (*src_iter == '[') {
         token.value = "[";
-        token.class_name = L_SQR_BR;
+        token.class_name = L_SQ_BR;
     }
     else if (*src_iter == '(') {
         token.value = "(";
@@ -189,7 +189,7 @@ Token Lexer::parseOtherSymbol() {
     }
     else if (*src_iter == ']') {
         token.value = "]";
-        token.class_name = R_SQR_BR;
+        token.class_name = R_SQ_BR;
     }
     else if (*src_iter == ')') {
         token.value = ")";

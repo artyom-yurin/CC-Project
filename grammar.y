@@ -1,3 +1,22 @@
+%{
+#include <cstdio>
+#include <stdio.h>
+#include <iostream>
+#include <string>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include "lexer/Lexer.hpp"
+#include "lexer/Token.hpp"
+int yylex(void);
+extern "C" FILE *yyin;
+
+#define YYSTYPE Token*
+Lexer* lexer;
+void yyerror(char const *s);
+%}
+
 %token VAR IS
 %token ROUTINE END
 %token IDENTIFIER TYPE
@@ -8,17 +27,15 @@
 %token REVERSE IN
 %token IF THEN ELSE
 %token AND OR XOR
-%token LT_SIGN, LET_SIGN, GT_SIGN, GET_SIGN, EQ_SIGN, NEQ_SIGN
+%token LT_SIGN LET_SIGN GT_SIGN GET_SIGN EQ_SIGN NEQ_SIGN
 %token MULT_SIGN DIV_SIGN MOD_SIGN
 %token PLUS_SIGN MINUS_SIGN
 %token TRUE FALSE REAL_LITERAL INTEGER_LITERAL
 %token RETURN
+%token L_SQ_BR R_SQ_BR L_BR R_BR
+%token COLON DOT COMMA
 
 %start program
-// {} group elements that can be repeated 0 or more times
-// [] group optional elements (repeated 0 or 1 time)
-// | denotes alternatives
-// () simply group alternatives 2•Only three relational operators
 %%
 program
     :
@@ -32,7 +49,7 @@ simple_declaration
     ;
 
 variable_declarartion
-    : VAR IDENTIFIER ':' type variable_expression
+    : VAR IDENTIFIER COLON type variable_expression
     | VAR IDENTIFIER IS expression
     ;
 
@@ -46,12 +63,12 @@ type_declaration
     ;
 
 routine_declaration
-    : ROUTINE IDENTIFIER '(' routine_parameters ')' routine_return_type IS body END
+    : ROUTINE IDENTIFIER L_BR routine_parameters R_BR routine_return_type IS body END
     ;
 
 routine_return_type
     :
-    | ':' type
+    | COLON type
     ;
 
 routine_parameters
@@ -60,12 +77,12 @@ routine_parameters
     ;
 
 parameters
-    : parameters ',' parameter_declaration
+    : parameters COMMA parameter_declaration
     | parameter_declaration
     ;
 
 parameter_declaration
-    : IDENTIFIER ':' IDENTIFIER
+    : IDENTIFIER COLON IDENTIFIER
     ;
 
 type
@@ -91,7 +108,7 @@ variables_declarartion
     ;
 
 array_type
-    : ARRAY '[' expression ']' type
+    : ARRAY L_SQ_BR expression R_SQ_BR type
     ;
 
 body
@@ -123,7 +140,7 @@ assignment
     ;
 
 routine_call
-    : IDENTIFIER '(' arguments ')'
+    : IDENTIFIER L_BR arguments R_BR
     ;
 
 arguments
@@ -132,7 +149,7 @@ arguments
     ;
 
 expressions
-    : expressions ',' expression
+    : expressions COMMA expression
     | expression
     ;
 
@@ -210,7 +227,7 @@ mult_sign_s
 
 summand
     : primary
-    | '(' expression ')'
+    | L_BR expression R_BR
     ;
 
 primary
@@ -223,7 +240,42 @@ primary
 
 modifiable_primary
     : IDENTIFIER
-    | modifiable_primary '[' expression ']'
-    | modifiable_primary '.' modifiable_primary
+    | modifiable_primary L_SQ_BR expression R_SQ_BR
+    | modifiable_primary DOT modifiable_primary
     ;
 %%
+
+int yylex()
+{
+  if (lexer == nullptr) return 0;
+  Token currentToken = lexer->next();
+  int tokenType = currentToken.class_name;
+  if (tokenType == 0) {return 0;}
+  yylval = new Token(tokenType, currentToken.value);
+  return tokenType;
+}
+
+void yyerror(char const *s)
+{
+	fflush(stdout);
+	printf("\n%s\n", "PIZDEC");
+}
+
+int main(int argc, char** argv){
+    if (argc != 2) {
+        std::cerr << "Invalid number of args" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <path_to_source>" << std::endl;
+        return 1;
+    }
+
+    std::ifstream src_file(argv[1]);
+    std::stringstream buffer;
+
+    buffer << src_file.rdbuf();
+
+    lexer = new Lexer(buffer.str());
+
+    yyparse();
+
+    return 0;
+}
