@@ -1,0 +1,4 @@
+routine main() : integer is
+    array a[5]
+    type x is integer
+end

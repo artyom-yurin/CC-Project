@@ -6,7 +6,7 @@ Node::Node() {
 }
 
 
-Node::Node(std::string value, ClassName class_name) {
+Node::Node(std::string value, int class_name) {
     this->value = value;
     this->class_name = class_name;
     this->next = NULL;
@@ -31,7 +31,7 @@ int SymbolTable::hashSum(std::string node_value) {
 }
 
 
-bool SymbolTable::insert(std::string value, ClassName class_name) {
+bool SymbolTable::insert(std::string value, int class_name) {
     int hash_id = hashSum(value);
     Node* node = new Node(value, class_name);
     if (nodes[hash_id] == NULL) {
@@ -52,12 +52,12 @@ bool SymbolTable::insert(std::string value, ClassName class_name) {
 }
 
 
-ClassName SymbolTable::find(std::string value) {
+int SymbolTable::find(std::string value) {
     int hash_id = hashSum(value);
     Node* start = nodes[hash_id];
 
     if (start == NULL) {
-        return ClassName::None;
+        return -1;
     }
 
     while (start != NULL) {
@@ -66,5 +66,5 @@ ClassName SymbolTable::find(std::string value) {
         }
         start = start->next;
     }
-    return ClassName::None;
+    return -1;
 }
