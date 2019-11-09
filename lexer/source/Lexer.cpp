@@ -1,4 +1,5 @@
 #include "Lexer.hpp"
+#include "yacc.hpp"
 
 
 Lexer::Lexer(std::string src) {
@@ -10,7 +11,7 @@ Lexer::Lexer(std::string src) {
 
 
 Token Lexer::next() {
-    Token token;
+    Token token = new Token(0, EOF);
 
     while (src_iter != src.end()) {
         if (*src_iter == ' ' || *src_iter == '\t') {
@@ -31,28 +32,28 @@ Token Lexer::next() {
 
 void Lexer::createSymbolTable() {
     // Feel the table keywords
-    std::pair<std::string, ClassName> keywords[] = {
-        {"var", ClassName::Var}, {"is", ClassName::Is},
-        {"type", ClassName::Type}, {"routine", ClassName::Routine},
-        {"end", ClassName::End}, {"record", ClassName::Rec},
-        {"array", ClassName::Arr}, {"while", ClassName::While},
-        {"loop", ClassName::Loop}, {"for", ClassName::For},
-        {"in", ClassName::In}, {"reverse", ClassName::Reverse},
-        {"foreach", ClassName::Foreach}, {"from", ClassName::From},
-        {"if", ClassName::If}, {"then", ClassName::Then},
-        {"else", ClassName::Else}, {"and", ClassName::And},
-        {"or", ClassName::Or}, {"xor", ClassName::Xor},
+    std::pair<std::string, int> keywords[] = {
+        {"var", VAR}, {"is", IS},
+        {"type", TYPE}, {"routine", ROUTINE},
+        {"end", END}, {"record", RECORD},
+        {"array", ARRAY}, {"while", WHILE},
+        {"loop", LOOP}, {"for", FOR},
+        {"in", IN}, {"reverse", REVERSE},
+        {"from", FROM}, {"return", RETURN},
+        {"if", IF}, {"then", THEN},
+        {"else", ELSE}, {"and", AND},
+        {"or", OR}, {"xor", XOR},
     };
 
-    std::string identifiers[] = {
-        "ineger", "real", "boolean",
+    std::int identifiers[] = {
+        INTEGER, REAL, BOOLEAN,
     };
 
     for (auto keyword : keywords)
         symbol_table.insert(keyword.first, keyword.second);
 
     for (std::string identifier : identifiers)
-        symbol_table.insert(identifier, ClassName::Ident);
+        symbol_table.insert(identifier, IDENTIFIER);
 
 }
 
@@ -88,7 +89,7 @@ Token Lexer::parseNumber() {
                 value += *src_iter;
                 src_iter++;
             }
-            token.class_name = ClassName::Real;
+            token.class_name = REAL;
             token.value = value;
             return token;
         }
@@ -100,7 +101,7 @@ Token Lexer::parseNumber() {
     if (value == "")
         value = "0";
 
-    token.class_name = ClassName::Int;
+    token.class_name = INTEGER;
     token.value = value;
     return token;
 }
@@ -117,9 +118,9 @@ Token Lexer::parseIdentifier() {
 
     ClassName class_name = symbol_table.find(value);
 
-    if (class_name == ClassName::None) {
-        class_name = ClassName::Ident;
-        symbol_table.insert(value, class_name);
+    if (class_name == -1) {
+        class_name = IDENTIFIER;
+        symbol_table.insert(value, IDENTIFIER);
     }
 
     token.value = value;
@@ -134,88 +135,84 @@ Token Lexer::parseOtherSymbol() {
 
     if (*src_iter == '+') {
         token.value = "+";
-        token.class_name = ClassName::Add;
+        token.class_name = PLUS_SIGN;
     }
     else if (*src_iter == '-') {
         token.value = "-";
-        token.class_name = ClassName::Sub;
+        token.class_name = MINUS_SIGN;
     }
     else if (*src_iter == '*') {
         token.value = "*";
-        token.class_name = ClassName::Mul;
+        token.class_name = MULT_SIGN;
     }
     else if (*src_iter == '/') {
         token.value = "/";
-        token.class_name = ClassName::Div;
+        token.class_name = DIV_SIGN;
     }
     else if (*src_iter == '%') {
         token.value = "%";
-        token.class_name = ClassName::Mod;
+        token.class_name = MOD_SIGN;
     }
     else if (*src_iter == '=') {
         token.value = '=';
-        token.class_name = ClassName::Eq;
+        token.class_name = EQ_SIGN;
     }
     else if (*src_iter == '<') {
         if (src_iter + 1 != src.end() && *(src_iter + 1) == '=') {
             src_iter++;
             token.value = "<=";
-            token.class_name = ClassName::LessOrEq;
+            token.class_name = LET_SIGN;
         }
         else {
             token.value = "<";
-            token.class_name = ClassName::Less;
+            token.class_name = LT_SIGN;
         }
     }
     else if (*src_iter == '>') {
         if (src_iter + 1 != src.end() && *(src_iter + 1) == '=') {
             src_iter++;
             token.value = ">=";
-            token.class_name = ClassName::GreatOrEq;
+            token.class_name = GET_SIGN;
         }
         else {
             token.value = ">";
-            token.class_name = ClassName::Great;
+            token.class_name = GT_SIGN;
         }
     }
     else if (*src_iter == '[') {
         token.value = "[";
-        token.class_name = ClassName::LefSqBr;
+        token.class_name = L_SQR_BR;
     }
     else if (*src_iter == '(') {
         token.value = "(";
-        token.class_name = ClassName::LefBr;
+        token.class_name = L_BR;
     }
     else if (*src_iter == ']') {
         token.value = "]";
-        token.class_name = ClassName::RightSqBr;
+        token.class_name = R_SQR_BR;
     }
     else if (*src_iter == ')') {
         token.value = ")";
-        token.class_name = ClassName::RightBr;
+        token.class_name = R_BR;
     }
     else if (*src_iter == ':') {
         if (src_iter + 1 != src.end() && *(src_iter + 1) == '=') {
             src_iter++;
             token.value = ":=";
-            token.class_name = ClassName::Assign;
+            token.class_name = ASSIGNMENT_SIGN;
         }
         else {
             token.value = ":";
-            token.class_name = ClassName::Colon;
+            token.class_name = COLON;
         }
-    }
-    else if (*src_iter == ';') {
-        token.value = ";";
-        token.class_name = ClassName::Semicolon;
     }
     else if (*src_iter == ',') {
         token.value = ",";
-        token.class_name = ClassName::Comma;
+        token.class_name = COMMA;
     }
     else if (*src_iter == '.') {
         token.value = ".";
-        token.class_name = ClassName::Dot;
+        token.class_name = DOT;
     }
     src_iter++;
     return token;

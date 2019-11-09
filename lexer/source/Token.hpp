@@ -22,9 +22,9 @@ enum ClassName {
 
 class Token {
     public:
-        ClassName class_name;
+        int class_name;
         std::string value;
     public:
         Token();
-        Token(ClassName class_name, std::string value);
+        Token(int class_name, std::string value);
 };

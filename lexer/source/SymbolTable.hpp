@@ -9,12 +9,12 @@
 class Node {
     public:
         std::string value;
-        ClassName class_name;
+        int class_name;
         Node* next; 
 
     public:
         Node();
-        Node(std::string value, ClassName class_name);
+        Node(std::string value, int class_name);
 };
 
 
@@ -27,7 +27,7 @@ class SymbolTable {
 
         int hashSum(std::string node_value);
 
-        bool insert(std::string value, ClassName class_name);
+        bool insert(std::string value, int class_name);
 
-        ClassName find(std::string value);
+        int find(std::string value);
 };
