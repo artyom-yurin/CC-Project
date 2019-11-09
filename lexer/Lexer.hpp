@@ -1,33 +1,34 @@
 #pragma once
 
-#include <string>
-#include <iostream>
-#include "Token.hpp"
 #include "SymbolTable.hpp"
+#include "Token.hpp"
+#include <iostream>
+#include <string>
 
 class Lexer {
-    private:
-        std::string src;
-        std::string::iterator src_iter;
+private:
+  std::string src;
+  std::string::iterator src_iter;
 
-    public:
-        SymbolTable symbol_table;
+public:
+  SymbolTable symbol_table;
 
-    public:
-        Lexer(std::string src);
-        Token next();
+public:
+  Lexer(std::string src);
+  Token next();
+  int column;
+private:
+  void createSymbolTable();
 
-    private:
-        void createSymbolTable();
+  bool isDigit(char c);
+  bool isHexDigit(char c);
+  bool isLetter(char c);
+  bool isOtherSymbol(char c);
 
-        bool isDigit(char c);
-        bool isHexDigit(char c);
-        bool isLetter(char c);
-        bool isOtherSymbol(char c);
-
-        void parseComment();
-        Token parseString();
-        Token parseOtherSymbol();
-        Token parseNumber();
-        Token parseIdentifier();
+  void parseComment();
+  Token parseString();
+  Token parseOtherSymbol();
+  Token parseNumber();
+  Token parseIdentifier();
+  void count(std::string str);
 };

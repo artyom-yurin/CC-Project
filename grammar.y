@@ -1,3 +1,5 @@
+%define parse.error verbose
+
 %{
 #include <cstdio>
 #include <stdio.h>
@@ -245,6 +247,12 @@ modifiable_primary
     ;
 %%
 
+void yyerror(char const *s)
+{
+	fflush(stdout);
+	printf("\n%*s\n%*s\n", lexer->column, "^", lexer->column, s);
+}
+
 int yylex()
 {
   if (lexer == nullptr) return 0;
@@ -253,12 +261,6 @@ int yylex()
   if (tokenType == 0) {return 0;}
   yylval = new Token(tokenType, currentToken.value);
   return tokenType;
-}
-
-void yyerror(char const *s)
-{
-	fflush(stdout);
-	printf("\n%s\n", "PIZDEC");
 }
 
 int main(int argc, char** argv){
