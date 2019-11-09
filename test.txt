@@ -1,1 +1,4 @@
-var a is integer : some
+routine main() : integer is
+    var a is 5
+    type x is integer
+end

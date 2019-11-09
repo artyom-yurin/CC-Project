@@ -1,3 +1,5 @@
+%define parse.error verbose
+
 %{
 #include <cstdio>
 #include <stdio.h>
@@ -39,7 +41,7 @@ void print_node(CNode* node, int margin);
 %token WHILE LOOP FOR
 %token REVERSE IN
 %token IF THEN ELSE
-%token AND OR XOR
+%token AND OR XOR NOT
 %token LT_SIGN LET_SIGN GT_SIGN GET_SIGN EQ_SIGN NEQ_SIGN
 %token MULT_SIGN DIV_SIGN MOD_SIGN
 %token PLUS_SIGN MINUS_SIGN
@@ -267,6 +269,12 @@ modifiable_primary
     ;
 %%
 
+void yyerror(char const *s)
+{
+	fflush(stdout);
+	printf("\n%*s\n%*s\n", lexer->column, "^", lexer->column, s);
+}
+
 int yylex()
 {
   if (lexer == nullptr) return 0;
@@ -277,11 +285,6 @@ int yylex()
   return tokenType;
 }
 
-void yyerror(char const *s)
-{
-	fflush(stdout);
-	printf("\n%s\n", "PIZDEC");
-}
 
 CNode* add_node(const std::string& name, int argc, ...) {
 	va_list argp;
@@ -326,7 +329,7 @@ int main(int argc, char** argv){
 
     yyparse();
 
-    print_tree(root);
+    //print_tree(root);
 
     return 0;
 }
