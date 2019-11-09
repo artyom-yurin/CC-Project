@@ -55,7 +55,8 @@ void Lexer::createSymbolTable() {
       {"return", RETURN},   {"if", IF},       {"then", THEN},
       {"else", ELSE},       {"and", AND},     {"or", OR},
       {"xor", XOR}, {"integer", INTEGER},     {"real", REAL},
-      {"boolean", BOOLEAN},
+      {"boolean", BOOLEAN}, {"true", TRUE},   {"false", FALSE},
+      {"not", NOT},
   };
 
   for (auto keyword : keywords)
@@ -144,8 +145,14 @@ Token Lexer::parseOtherSymbol() {
     token.value = "*";
     token.class_name = MULT_SIGN;
   } else if (*src_iter == '/') {
-    token.value = "/";
-    token.class_name = DIV_SIGN;
+    if (*(src_iter + 1) == '=' && (src_iter + 1 != src.end())) {
+	token.value = "/=";
+	token.class_name = NEQ_SIGN;
+    }
+    else {
+	token.value = "/";
+    	token.class_name = DIV_SIGN;
+    }
   } else if (*src_iter == '%') {
     token.value = "%";
     token.class_name = MOD_SIGN;
