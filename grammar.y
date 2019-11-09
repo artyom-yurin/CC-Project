@@ -5,18 +5,26 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
-#include <string>
 #include <fstream>
 #include <sstream>
-#include <iostream>
+#include <stdlib.h>
+#include <stdarg.h>
 #include "lexer/Lexer.hpp"
 #include "lexer/Token.hpp"
-int yylex(void);
-extern "C" FILE *yyin;
+#include "Node.hpp"
 
-#define YYSTYPE Token*
-Lexer* lexer;
+int yylex(void);
 void yyerror(char const *s);
+
+#define YYSTYPE CNode*
+Lexer* lexer;
+CNode *root;
+
+CNode* add_node(const std::string& name, int argc, ...);
+void print_tree(CNode* root);
+void print_node(CNode* node, int margin);
+void pick_up_children(CNode* parent, CNode* bad_parent);
+void add_child(CNode* parent, CNode* child);
 %}
 
 %token VAR IS
@@ -28,7 +36,7 @@ void yyerror(char const *s);
 %token WHILE LOOP FOR
 %token REVERSE IN
 %token IF THEN ELSE
-%token AND OR XOR
+%token AND OR XOR NOT
 %token LT_SIGN LET_SIGN GT_SIGN GET_SIGN EQ_SIGN NEQ_SIGN
 %token MULT_SIGN DIV_SIGN MOD_SIGN
 %token PLUS_SIGN MINUS_SIGN
@@ -40,215 +48,234 @@ void yyerror(char const *s);
 %start program
 %%
 program
-    :
-    | program simple_declaration
-    | program routine_declaration
+    : {$$ = nullptr;}
+    | program simple_declaration { $$ = add_node("program", 0); pick_up_children($$, $1); add_child($$, $2); root = $$;}
+    | program routine_declaration { $$ = add_node("program", 0); pick_up_children($$, $1); add_child($$, $2);root = $$;}
     ;
 
 simple_declaration
-    : variable_declarartion
-    | type_declaration
+    : variable_declarartion { $$ = add_node("simple_declarartion", 1, $1); }
+    | type_declaration { $$ = add_node("simple_declaration", 1, $1); }
     ;
 
 variable_declarartion
-    : VAR IDENTIFIER COLON type variable_expression
-    | VAR IDENTIFIER IS expression
+    : VAR IDENTIFIER COLON type variable_expression { $$ = add_node("variable_declarartion", 3, $2, $4, $5);}
+    | VAR IDENTIFIER IS expression { $$ = add_node("variable_declarartion", 2, $2, $4);}
     ;
 
 variable_expression
-    :
-    | IS expression
+    : {$$ = nullptr;}
+    | IS expression { $$ = add_node("variable_expression", 1, $2);}
     ;
 
 type_declaration
-    : TYPE IDENTIFIER IS type
+    : TYPE IDENTIFIER IS type { $$ = add_node("type_declaration", 2, $2, $4);}
     ;
 
 routine_declaration
-    : ROUTINE IDENTIFIER L_BR routine_parameters R_BR routine_return_type IS body END
+    : ROUTINE IDENTIFIER L_BR routine_parameters R_BR routine_return_type IS body END { $$ = add_node("routine_declaration", 4, $2, $4, $6, $8);}
     ;
 
 routine_return_type
-    :
-    | COLON type
+    : {$$ = nullptr;}
+    | COLON type { $$ = add_node("routine_return_type", 1, $2);}
     ;
 
 routine_parameters
-    :
-    | parameters
+    : {$$ = nullptr;}
+    | parameters { $$ = add_node("routine_parameters", 1, $1);}
     ;
 
 parameters
-    : parameters COMMA parameter_declaration
-    | parameter_declaration
+    : parameters COMMA parameter_declaration { $$ = add_node("parameters", 0); pick_up_children($$, $1); add_child($$, $3);}
+    | parameter_declaration { $$ = add_node("parameters", 1, $1);}
     ;
 
+//primitive types?
 parameter_declaration
-    : IDENTIFIER COLON IDENTIFIER
+    : IDENTIFIER COLON IDENTIFIER { $$ = add_node("parameter_declaration", 2, $1, $3);}
     ;
 
 type
-    : primitive_type
-    | array_type
-    | record_type
-    | IDENTIFIER
+    : primitive_type { $$ = add_node("type", 1, $1);}
+    | array_type { $$ = add_node("type", 1, $1);}
+    | record_type { $$ = add_node("type", 1, $1);}
+    | IDENTIFIER { $$ = add_node("type", 1, $1);}
     ;
 
 primitive_type
-    : INTEGER
-    | REAL
-    | BOOLEAN
+    : INTEGER { $$ = $1;}
+    | REAL { $$ = $1;}
+    | BOOLEAN { $$ = $1;}
     ;
 
 record_type
-    : RECORD variables_declarartion END
+    : RECORD variables_declarartion END { $$ = add_node("record_type", 1, $2);}
     ;
 
 variables_declarartion
-    : variable_declarartion variables_declarartion
-    |
+    : variable_declarartion variables_declarartion { $$ = add_node("variables_declarartion", 1, $1); pick_up_children($$, $2);}
+    | {$$ = nullptr;}
     ;
 
 array_type
-    : ARRAY L_SQ_BR expression R_SQ_BR type
+    : ARRAY L_SQ_BR expression R_SQ_BR type { $$ = add_node("array_type", 2, $3, $5);}
     ;
 
 body
-    :
-    | body simple_declaration
-    | body statement
+    : {$$ = nullptr;}
+    | body simple_declaration { $$ = add_node("body", 0);  pick_up_children($$, $1); add_child($$, $2);}
+    | body statement { $$ = add_node("body", 0); pick_up_children($$, $1); add_child($$, $2);}
     ;
 
 statement
-    : assignment
-    | routine_call
-    | while_loop
-    | for_loop
-    | if_statement
-    | return
+    : assignment  { $$ = add_node("statement", 1, $1);}
+    | routine_call { $$ = add_node("statement", 1, $1);}
+    | while_loop { $$ = add_node("statement", 1, $1);}
+    | for_loop { $$ = add_node("statement", 1, $1);}
+    | if_statement { $$ = add_node("statement", 1, $1);}
+    | return { $$ = add_node("statement", 1, $1);}
     ;
 
 return
-    : RETURN return_value
+    : RETURN return_value { $$ = add_node("return", 1, $2); }
     ;
 
 return_value
-    :
-    | expression
+    : {$$ = nullptr;}
+    | expression { $$ = add_node("return_value", 1, $1);}
     ;
 
 assignment
-    : modifiable_primary ASSIGNMENT_SIGN expression
+    : modifiable_primary ASSIGNMENT_SIGN expression { $$ = add_node("assignment", 2, $1, $3);}
     ;
 
 routine_call
-    : IDENTIFIER L_BR arguments R_BR
+    : IDENTIFIER L_BR arguments R_BR { $$ = add_node("routine_call", 2, $1, $3);}
     ;
 
 arguments
-    :
-    | expressions
+    : {$$ = nullptr;}
+    | expressions { $$ = add_node("arguments", 1, $1);}
     ;
 
 expressions
-    : expressions COMMA expression
-    | expression
+    : expressions COMMA expression { $$ = add_node("expressions", 0);  pick_up_children($$, $1); add_child($$, $2);}
+    | expression { $$ = add_node("expressions", 1, $1);}
     ;
 
 while_loop
-    : WHILE expression LOOP body END
+    : WHILE expression LOOP body END { $$ = add_node("while_loop", 2, $2, $4);}
     ;
 
 for_loop
-    : FOR IDENTIFIER range LOOP body END
+    : FOR IDENTIFIER range LOOP body END { $$ = add_node("for_loop", 3, $2, $3, $5);}
     ;
 
 range
-    : IN reverse expression RANGE_SIGN expression
+    : IN reverse expression RANGE_SIGN expression { $$ = add_node("range", 3, $2, $3, $5);}
     ;
 
 reverse
-    :
-    | REVERSE
+    : {$$ = nullptr;}
+    | REVERSE { $$ = $1;}
     ;
 
 if_statement
-    : IF expression THEN body else_body END
+    : IF expression THEN body else_body END { $$ = add_node("if_statement", 3, $2, $4, $5);}
     ;
 
 else_body
-    :
-    | ELSE body
+    : {$$ = nullptr;}
+    | ELSE body { $$ = add_node("else_body", 1, $2);}
     ;
 
 expression
-    : expression logic_operation relation
-    | relation
+    : expression logic_operation relation { $$ = add_node("expression", 3, $1, $2, $3);}
+    | relation { $$ = add_node("expression", 1, $1);}
     ;
 
 logic_operation
-    : AND
-    | OR
-    | XOR
+    : AND { $$ = $1;}
+    | OR { $$ = $1;}
+    | XOR { $$ = $1;}
     ;
 
 relation
-    : simple
-    | simple compare_sign simple
+    : simple { $$ = add_node("relation", 1, $1);}
+    | simple compare_sign simple { $$ = add_node("relation", 3, $1, $2, $3);}
     ;
 
 compare_sign
-    : LT_SIGN
-    | LET_SIGN
-    | GT_SIGN
-    | GET_SIGN
-    | EQ_SIGN
-    | NEQ_SIGN
+    : LT_SIGN { $$ = $1;}
+    | LET_SIGN { $$ = $1;}
+    | GT_SIGN { $$ = $1;}
+    | GET_SIGN { $$ = $1;}
+    | EQ_SIGN { $$ = $1;}
+    | NEQ_SIGN { $$ = $1;}
     ;
 
 simple
-    : simple mult_sign_f factor
-    | factor
+    : simple mult_sign_f factor { $$ = add_node("simple", 3, $1, $2, $3);}
+    | factor { $$ = add_node("simple", 1, $1);}
     ;
 // f mean first priority
 mult_sign_f
-    : MULT_SIGN
-    | DIV_SIGN
-    | MOD_SIGN
+    : MULT_SIGN { $$ = $1;}
+    | DIV_SIGN { $$ = $1;}
+    | MOD_SIGN { $$ = $1;}
     ;
 
 factor
-    : factor mult_sign_s summand
-    | summand
+    : factor mult_sign_s summand { $$ = add_node("factor", 3, $1, $2, $3);}
+    | summand { $$ = add_node("factor", 1, $1);}
     ;
 // s mean second priority
 mult_sign_s
-    : PLUS_SIGN
-    | MINUS_SIGN
+    : PLUS_SIGN { $$ = $1;}
+    | MINUS_SIGN { $$ = $1;}
     ;
 
 summand
-    : primary
-    | L_BR expression R_BR
+    : primary { $$ = add_node("summand", 1, $1);}
+    | L_BR expression R_BR { $$ = add_node("summand", 1, $2);}
+    ;
+
+unary_sign
+    : {$$ = nullptr;}
+    | mult_sign_s {$$ = add_node("unary", 1, $1);}
     ;
 
 primary
-    : TRUE
-    | FALSE
-    | REAL_LITERAL
-    | INTEGER_LITERAL
-    | modifiable_primary
+    : TRUE { $$ = add_node("boolean", 1, $1);}
+    | FALSE { $$ = add_node("boolean", 1, $1);}
+    | unary_sign REAL_LITERAL { $$ = add_node("real", 2, $1, $2);}
+    | unary_sign INTEGER_LITERAL { $$ = add_node("integer", 2, $1, $2);}
+    | NOT INTEGER_LITERAL { $$ = add_node("boolean", 2, $1, $2);}
+    | modifiable_primary { $$ = $1;}
     ;
 
 modifiable_primary
-    : IDENTIFIER
-    | modifiable_primary L_SQ_BR expression R_SQ_BR
-    | modifiable_primary DOT modifiable_primary
+    : IDENTIFIER { $$ = add_node("modifiable_primary", 1, $1);}
+    | modifiable_primary L_SQ_BR expression R_SQ_BR { $$ = add_node("modifiable_primary_array", 2, $1, $3);}
+    | modifiable_primary DOT modifiable_primary { $$ = add_node("modifiable_primary_field", 2, $1, $3);}
     ;
 %%
 
+void clear_node(CNode * node){
+	if (node == nullptr) return;
+
+	for (int i = 0; i < node->children.size(); i++) {
+        	clear_node(node->children[i]);
+        }
+
+	delete node;
+}
+
 void yyerror(char const *s)
 {
+	clear_node(root);
+	root = nullptr;
 	fflush(stdout);
 	printf("\n%*s\n%*s\n", lexer->column, "^", lexer->column, s);
 }
@@ -259,9 +286,50 @@ int yylex()
   Token currentToken = lexer->next();
   int tokenType = currentToken.class_name;
   if (tokenType == 0) {return 0;}
-  yylval = new Token(tokenType, currentToken.value);
+  yylval = new CNode(currentToken.value);
   return tokenType;
 }
+
+
+CNode* add_node(const std::string& name, int argc, ...) {
+	va_list argp;
+  CNode* newNode = new CNode(name);
+
+  va_start(argp, argc);
+  for (int i = 0; i < argc; i++)
+        newNode->children.push_back(va_arg(argp, CNode*));
+  va_end(argp);
+
+  return newNode;
+}
+
+void pick_up_children(CNode* parent, CNode* bad_parent){
+	if (parent == nullptr || bad_parent == nullptr) return;
+	for (int i = 0; i < bad_parent->children.size(); i++) {
+		parent->children.push_back(bad_parent->children[i]);
+	}
+	delete bad_parent;
+}
+
+void add_child(CNode* parent, CNode* child){
+    if (parent == nullptr || child == nullptr) return;
+    parent->children.push_back(child);
+}
+
+void print_node(CNode* node, int margin) {
+  if (node == nullptr) return;
+  for (int i = 0; i < margin; i++)
+			std::cout << "   ";
+  std::cout << "<" << node->name << ">\n";
+  for (int j = 0; j < node->children.size(); j++)
+	  print_node(node->children[j], margin + 1);
+}
+
+void print_tree(CNode* root) {
+  	print_node(root, 0);
+}
+
+
 
 int main(int argc, char** argv){
     if (argc != 2) {
@@ -278,6 +346,8 @@ int main(int argc, char** argv){
     lexer = new Lexer(buffer.str());
 
     yyparse();
+
+    print_tree(root);
 
     return 0;
 }

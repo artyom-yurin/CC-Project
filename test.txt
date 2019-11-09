@@ -2,3 +2,10 @@ routine main() : integer is
     var a is 5
     type x is integer
 end
+routine some() : integer is
+    var a is not 5
+    type x is integer
+    main()
+    x.f[1].r.x := 4
+    return x
+end
