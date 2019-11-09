@@ -12,25 +12,20 @@
 #include "lexer/Lexer.hpp"
 #include "lexer/Token.hpp"
 #include "Node.hpp"
+
 int yylex(void);
-extern "C" FILE *yyin;
+void yyerror(char const *s);
 
 #define YYSTYPE CNode*
-
 Lexer* lexer;
-void yyerror(char const *s);
 CNode *root;
+
 CNode* add_node(const std::string& name, int argc, ...);
 void print_tree(CNode* root);
 void print_node(CNode* node, int margin);
+void pick_up_children(CNode* parent, CNode* bad_parent);
+void add_child(CNode* parent, CNode* child);
 %}
-
-// %union {
-//     int number;
-//     char symbol;
-// 	char string[30];
-// 	struct nodeType *node;
-// };
 
 %token VAR IS
 %token ROUTINE END
@@ -50,21 +45,12 @@ void print_node(CNode* node, int margin);
 %token L_SQ_BR R_SQ_BR L_BR R_BR
 %token COLON DOT COMMA
 
-// %type <node> program simple_declaration variable_declarartion variable_expression type_declaration routine_declaration routine_return_type
-// %type <node> routine_parameters parameters parameter_declaration type primitive_type
-// %type <node> record_type variables_declarartion array_type body statement return
-// %type <node> return_value assignment routine_call arguments expressions while_loop
-// %type <node> for_loop range reverse if_statement else_body expression logic_operation relation
-// %type <node> compare_sign simple mult_sign_f factor mult_sign_s summand primary modifiable_primary
-
-
-
 %start program
 %%
 program
     : {$$ = nullptr;}
-    | program simple_declaration { $$ = add_node("program", 1, $2); root = $$;}
-    | program routine_declaration { $$ = add_node("program", 1, $2); root = $$;}
+    | program simple_declaration { $$ = add_node("program", 0); pick_up_children($$, $1); add_child($$, $2); root = $$;}
+    | program routine_declaration { $$ = add_node("program", 0); pick_up_children($$, $1); add_child($$, $2);root = $$;}
     ;
 
 simple_declaration
@@ -73,8 +59,8 @@ simple_declaration
     ;
 
 variable_declarartion
-    : VAR IDENTIFIER COLON type variable_expression { $$ = add_node("variable_declarartion", 3, yylval -> name, $4, $5);}
-    | VAR IDENTIFIER IS expression { $$ = add_node("variable_declarartion", 2, yylval -> name, $4);}
+    : VAR IDENTIFIER COLON type variable_expression { $$ = add_node("variable_declarartion", 3, $2, $4, $5);}
+    | VAR IDENTIFIER IS expression { $$ = add_node("variable_declarartion", 2, $2, $4);}
     ;
 
 variable_expression
@@ -83,11 +69,11 @@ variable_expression
     ;
 
 type_declaration
-    : TYPE IDENTIFIER IS type { $$ = add_node("type_declaration", 2, yylval -> name, $4);}
+    : TYPE IDENTIFIER IS type { $$ = add_node("type_declaration", 2, $2, $4);}
     ;
 
 routine_declaration
-    : ROUTINE IDENTIFIER L_BR routine_parameters R_BR routine_return_type IS body END { $$ = add_node("routine_declaration", 4, yylval -> name, $4, $6, $8);}
+    : ROUTINE IDENTIFIER L_BR routine_parameters R_BR routine_return_type IS body END { $$ = add_node("routine_declaration", 4, $2, $4, $6, $8);}
     ;
 
 routine_return_type
@@ -101,25 +87,26 @@ routine_parameters
     ;
 
 parameters
-    : parameters COMMA parameter_declaration { $$ = add_node("parameters", 2, $1, $3);}
+    : parameters COMMA parameter_declaration { $$ = add_node("parameters", 0); pick_up_children($$, $1); add_child($$, $3);}
     | parameter_declaration { $$ = add_node("parameters", 1, $1);}
     ;
 
+//primitive types?
 parameter_declaration
-    : IDENTIFIER COLON IDENTIFIER { $$ = add_node("parameter_declaration", 2, yylval -> name, yylval -> name);}
+    : IDENTIFIER COLON IDENTIFIER { $$ = add_node("parameter_declaration", 2, $1, $3);}
     ;
 
 type
     : primitive_type { $$ = add_node("type", 1, $1);}
     | array_type { $$ = add_node("type", 1, $1);}
     | record_type { $$ = add_node("type", 1, $1);}
-    | IDENTIFIER { $$ = add_node("type", 1, yylval -> name);}
+    | IDENTIFIER { $$ = add_node("type", 1, $1);}
     ;
 
 primitive_type
-    : INTEGER { $$ = add_node("primitive_type", 1, yylval -> name);}
-    | REAL { $$ = add_node("primitive_type", 1, yylval -> name);}
-    | BOOLEAN { $$ = add_node("primitive_type", 1, yylval -> name);}
+    : INTEGER { $$ = $1;}
+    | REAL { $$ = $1;}
+    | BOOLEAN { $$ = $1;}
     ;
 
 record_type
@@ -127,7 +114,7 @@ record_type
     ;
 
 variables_declarartion
-    : variable_declarartion variables_declarartion { $$ = add_node("variables_declarartion", 2, $1, $2);}
+    : variable_declarartion variables_declarartion { $$ = add_node("variables_declarartion", 1, $1); pick_up_children($$, $2);}
     | {$$ = nullptr;}
     ;
 
@@ -137,8 +124,8 @@ array_type
 
 body
     : {$$ = nullptr;}
-    | body simple_declaration { $$ = add_node("body", 2, $1, $2);}
-    | body statement { $$ = add_node("body", 2, $1, $2);}
+    | body simple_declaration { $$ = add_node("body", 0);  pick_up_children($$, $1); add_child($$, $2);}
+    | body statement { $$ = add_node("body", 0); pick_up_children($$, $1); add_child($$, $2);}
     ;
 
 statement
@@ -164,7 +151,7 @@ assignment
     ;
 
 routine_call
-    : IDENTIFIER L_BR arguments R_BR { $$ = add_node("routine_call", 2, yylval -> name, $3);}
+    : IDENTIFIER L_BR arguments R_BR { $$ = add_node("routine_call", 2, $1, $3);}
     ;
 
 arguments
@@ -173,7 +160,7 @@ arguments
     ;
 
 expressions
-    : expressions COMMA expression { $$ = add_node("expressions", 2, $1, $3);}
+    : expressions COMMA expression { $$ = add_node("expressions", 0);  pick_up_children($$, $1); add_child($$, $2);}
     | expression { $$ = add_node("expressions", 1, $1);}
     ;
 
@@ -182,7 +169,7 @@ while_loop
     ;
 
 for_loop
-    : FOR IDENTIFIER range LOOP body END { $$ = add_node("for_loop", 3, yylval -> name, $3, $5);}
+    : FOR IDENTIFIER range LOOP body END { $$ = add_node("for_loop", 3, $2, $3, $5);}
     ;
 
 range
@@ -191,7 +178,7 @@ range
 
 reverse
     : {$$ = nullptr;}
-    | REVERSE { $$ = add_node("reverse", 1, yylval -> name);}
+    | REVERSE { $$ = $1;}
     ;
 
 if_statement
@@ -209,9 +196,9 @@ expression
     ;
 
 logic_operation
-    : AND { $$ = add_node("logic_operation", 1, yylval -> name);}
-    | OR { $$ = add_node("logic_operation", 1, yylval -> name);}
-    | XOR { $$ = add_node("logic_operation", 1, yylval -> name);}
+    : AND { $$ = $1;}
+    | OR { $$ = $1;}
+    | XOR { $$ = $1;}
     ;
 
 relation
@@ -220,12 +207,12 @@ relation
     ;
 
 compare_sign
-    : LT_SIGN { $$ = add_node("compare_sign", 1, yylval -> name);}
-    | LET_SIGN { $$ = add_node("compare_sign", 1, yylval -> name);}
-    | GT_SIGN { $$ = add_node("compare_sign", 1, yylval -> name);}
-    | GET_SIGN { $$ = add_node("compare_sign", 1, yylval -> name);}
-    | EQ_SIGN { $$ = add_node("compare_sign", 1, yylval -> name);}
-    | NEQ_SIGN { $$ = add_node("compare_sign", 1, yylval -> name);}
+    : LT_SIGN { $$ = $1;}
+    | LET_SIGN { $$ = $1;}
+    | GT_SIGN { $$ = $1;}
+    | GET_SIGN { $$ = $1;}
+    | EQ_SIGN { $$ = $1;}
+    | NEQ_SIGN { $$ = $1;}
     ;
 
 simple
@@ -234,9 +221,9 @@ simple
     ;
 // f mean first priority
 mult_sign_f
-    : MULT_SIGN { $$ = add_node("mult_sign_f", 1, yylval -> name);}
-    | DIV_SIGN { $$ = add_node("mult_sign_f", 1, yylval -> name);}
-    | MOD_SIGN { $$ = add_node("mult_sign_f", 1, yylval -> name);}
+    : MULT_SIGN { $$ = $1;}
+    | DIV_SIGN { $$ = $1;}
+    | MOD_SIGN { $$ = $1;}
     ;
 
 factor
@@ -245,8 +232,8 @@ factor
     ;
 // s mean second priority
 mult_sign_s
-    : PLUS_SIGN { $$ = add_node("mult_sign_s", 1, yylval -> name);}
-    | MINUS_SIGN { $$ = add_node("mult_sign_s", 1, yylval -> name);}
+    : PLUS_SIGN { $$ = $1;}
+    | MINUS_SIGN { $$ = $1;}
     ;
 
 summand
@@ -254,23 +241,41 @@ summand
     | L_BR expression R_BR { $$ = add_node("summand", 1, $2);}
     ;
 
+unary_sign
+    : {$$ = nullptr;}
+    | mult_sign_s {$$ = add_node("unary", 1, $1);}
+    ;
+
 primary
-    : TRUE { $$ = add_node("primary", 1, yylval -> name);}
-    | FALSE { $$ = add_node("primary", 1, yylval -> name);}
-    | REAL_LITERAL { $$ = add_node("primary", 1, yylval -> name);}
-    | INTEGER_LITERAL { $$ = add_node("primary", 1, yylval -> name);}
-    | modifiable_primary { $$ = add_node("primary", 1, $1);}
+    : TRUE { $$ = add_node("boolean", 1, $1);}
+    | FALSE { $$ = add_node("boolean", 1, $1);}
+    | unary_sign REAL_LITERAL { $$ = add_node("real", 2, $1, $2);}
+    | unary_sign INTEGER_LITERAL { $$ = add_node("integer", 2, $1, $2);}
+    | NOT INTEGER_LITERAL { $$ = add_node("boolean", 2, $1, $2);}
+    | modifiable_primary { $$ = $1;}
     ;
 
 modifiable_primary
-    : IDENTIFIER { $$ = add_node("modifiable_primary", 1, yylval -> name);}
-    | modifiable_primary L_SQ_BR expression R_SQ_BR { $$ = add_node("modifiable_primary", 2, $1, $3);}
-    | modifiable_primary DOT modifiable_primary { $$ = add_node("modifiable_primary", 2, $1, $3);}
+    : IDENTIFIER { $$ = add_node("modifiable_primary", 1, $1);}
+    | modifiable_primary L_SQ_BR expression R_SQ_BR { $$ = add_node("modifiable_primary_array", 2, $1, $3);}
+    | modifiable_primary DOT modifiable_primary { $$ = add_node("modifiable_primary_field", 2, $1, $3);}
     ;
 %%
 
+void clear_node(CNode * node){
+	if (node == nullptr) return;
+
+	for (int i = 0; i < node->children.size(); i++) {
+        	clear_node(node->children[i]);
+        }
+
+	delete node;
+}
+
 void yyerror(char const *s)
 {
+	clear_node(root);
+	root = nullptr;
 	fflush(stdout);
 	printf("\n%*s\n%*s\n", lexer->column, "^", lexer->column, s);
 }
@@ -296,6 +301,19 @@ CNode* add_node(const std::string& name, int argc, ...) {
   va_end(argp);
 
   return newNode;
+}
+
+void pick_up_children(CNode* parent, CNode* bad_parent){
+	if (parent == nullptr || bad_parent == nullptr) return;
+	for (int i = 0; i < bad_parent->children.size(); i++) {
+		parent->children.push_back(bad_parent->children[i]);
+	}
+	delete bad_parent;
+}
+
+void add_child(CNode* parent, CNode* child){
+    if (parent == nullptr || child == nullptr) return;
+    parent->children.push_back(child);
 }
 
 void print_node(CNode* node, int margin) {
@@ -329,7 +347,7 @@ int main(int argc, char** argv){
 
     yyparse();
 
-    //print_tree(root);
+    print_tree(root);
 
     return 0;
 }
