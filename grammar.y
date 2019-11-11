@@ -94,6 +94,7 @@ parameters
 //primitive types?
 parameter_declaration
     : IDENTIFIER COLON IDENTIFIER { $$ = add_node("parameter_declaration", 2, $1, $3);}
+    | IDENTIFIER COLON primitive_type { $$ = add_node("parameter_declaration", 2, $1, $3);}
     ;
 
 type

@@ -1,7 +1,7 @@
-routine main() : integer is
+routine main(x: integer, y: boolean) : integer is
     return not x
 end
-routine some() : integer is
+routine some(m: someType) : integer is
     var a is -5
     type x is integer
     main()
