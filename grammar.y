@@ -229,6 +229,8 @@ mult_sign_f
 factor
     : factor mult_sign_s summand { $$ = add_node("factor", 3, $1, $2, $3);}
     | summand { $$ = add_node("factor", 1, $1);}
+    | mult_sign_s summand { $$ = add_node("unary_factor", 2, $1, $2);}
+    | NOT summand { $$ = add_node("not_factor", 2, $1, $2);}
     ;
 // s mean second priority
 mult_sign_s
@@ -241,17 +243,12 @@ summand
     | L_BR expression R_BR { $$ = add_node("summand", 1, $2);}
     ;
 
-unary_sign
-    : {$$ = nullptr;}
-    | mult_sign_s {$$ = add_node("unary", 1, $1);}
-    ;
 
 primary
     : TRUE { $$ = add_node("boolean", 1, $1);}
     | FALSE { $$ = add_node("boolean", 1, $1);}
-    | unary_sign REAL_LITERAL { $$ = add_node("real", 2, $1, $2);}
-    | unary_sign INTEGER_LITERAL { $$ = add_node("integer", 2, $1, $2);}
-    | NOT INTEGER_LITERAL { $$ = add_node("boolean", 2, $1, $2);}
+    | REAL_LITERAL { $$ = add_node("real", 1, $1);}
+    | INTEGER_LITERAL { $$ = add_node("integer", 1, $1);}
     | modifiable_primary { $$ = $1;}
     ;
 
