@@ -1,11 +1,10 @@
-routine main() : integer is
-    var a is 5
-    type x is integer
+routine main(x: integer, y: boolean) : integer is
+    return not x
 end
-routine some() : integer is
-    var a is not 5
+routine some(m: someType) : integer is
+    var a is -5
     type x is integer
     main()
-    x.f[1].r.x := 4
-    return x
+    x.f[1].r.x := -4.0
+    return not(not (x < 8) and x > 7)
 end
