@@ -20,6 +20,8 @@ public:
 
   bool isType(const std::string &cname);
 
+  bool removeType(const std::string &cname);
+
 private:
   std::unordered_map<std::string, std::shared_ptr<TypeNode>> types;
 };

@@ -67,3 +67,13 @@ std::shared_ptr<const TypeNode> TypeTable::getType(const std::string &cname) {
     return (*type).second;
   }
 }
+
+
+bool TypeTable::removeType(const std::string &cname){
+  if (!isType(cname))
+    return false;
+
+  types.erase(cname);
+
+  return true;
+}
