@@ -14,28 +14,22 @@ bool TypeTable::isType(const std::string &cname) {
 }
 
 bool TypeTable::addSimpleType(const std::string &cname,
-                              const std::string &originalName) {
+                              std::shared_ptr<TypeNode> type) {
   if (isType(cname))
     return false;
 
-  auto type = types.find(originalName);
-  if (type == types.end())
-    return false;
   types.insert(
-      std::pair<std::string, std::shared_ptr<TypeNode>>(cname, (*type).second));
+      std::pair<std::string, std::shared_ptr<TypeNode>>(cname, type));
 
   return true;
 }
 
 bool TypeTable::addArrayType(const std::string &cname, CNode *expression,
-                             const std::string &type) {
+                             std::shared_ptr<TypeNode> type) {
   if (isType(cname))
     return false;
-  auto oType = types.find(type);
-  if (oType == types.end())
-    return false;
 
-  auto arrayType = std::make_shared<ArrayType>(expression, (*oType).second);
+  auto arrayType = std::make_shared<ArrayType>(expression, type);
 
   types.insert(
       std::pair<std::string, std::shared_ptr<TypeNode>>(cname, arrayType));
@@ -58,7 +52,7 @@ bool TypeTable::addRecordType(const std::string &cname, CNode *record) {
   return true;
 }
 
-std::shared_ptr<const TypeNode> TypeTable::getType(const std::string &cname) {
+std::shared_ptr<TypeNode> TypeTable::getType(const std::string &cname) {
   auto type = types.find(cname);
   if (type == types.end()) {
     return nullptr;
