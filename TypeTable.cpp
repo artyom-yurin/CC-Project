@@ -61,7 +61,7 @@ bool TypeTable::addRecordType(const std::string &cname, CNode *record) {
 std::shared_ptr<const TypeNode> TypeTable::getType(const std::string &cname) {
   auto type = types.find(cname);
   if (type == types.end()) {
-    return std::make_shared<CNoType>();
+    return nullptr;
   } else {
     return (*type).second;
   }

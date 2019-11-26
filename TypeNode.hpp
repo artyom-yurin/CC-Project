@@ -2,13 +2,11 @@
 #define CC_PROJECT_TYPENODE_HPP
 
 #include "Node.hpp"
-#include "SymbolNode.hpp"
 #include <string>
 
-class SymbolNode;
+class VariableNode;
 
 enum Types {
-  NoType,
   Auto,
   Simple,
   Array,
@@ -22,13 +20,6 @@ public:
   virtual std::string toStr() const = 0;
 protected:
   Types type;
-};
-
-class CNoType : public TypeNode{
-public:
-  CNoType();
-  ~CNoType() = default;
-  std::string toStr() const override ;
 };
 
 class AutoType : public TypeNode{

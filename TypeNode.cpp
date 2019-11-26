@@ -1,12 +1,10 @@
 #include "TypeNode.hpp"
+#include "SymbolNode.hpp"
 
 Types TypeNode::getType() const { return type; }
 
 AutoType::AutoType() { this->type = Types ::Auto; }
 std::string AutoType::toStr() const { return "Auto: need to determine"; }
-
-CNoType::CNoType() { this->type = Types ::NoType; }
-std::string CNoType::toStr() const { return "Error: No type"; }
 
 SimpleType::SimpleType(const std::string &name) {
   this->type = Types ::Simple;
