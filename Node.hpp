@@ -1,3 +1,6 @@
+#ifndef CC_PROJECT_NODE_HPP
+#define CC_PROJECT_NODE_HPP
+
 #include <string>
 #include <vector>
 #include <memory>
@@ -9,3 +12,5 @@ public:
 
       CNode(const std::string &name);
 };
+
+#endif // CC_PROJECT_NODE_HPP

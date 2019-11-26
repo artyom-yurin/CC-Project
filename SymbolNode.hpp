@@ -1,0 +1,48 @@
+#ifndef CC_PROJECT_SYMBOLNODE_HPP
+#define CC_PROJECT_SYMBOLNODE_HPP
+
+#include "Node.hpp"
+#include <string>
+
+class TypeNode;
+
+enum RecordTypes { Variable, Function };
+
+class SymbolNode {
+public:
+  virtual ~SymbolNode() = default;
+  RecordTypes getType();
+  virtual std::string toString() = 0;
+
+protected:
+  RecordTypes type;
+};
+
+class VariableNode : public SymbolNode {
+public:
+  VariableNode(const std::string &variableName,
+               std::shared_ptr<TypeNode> variableType, CNode *Expression);
+  ~VariableNode() = default;
+
+  std::string toString() override;
+
+  std::shared_ptr<TypeNode> variable_type_;
+  std::string variable_name_;
+  CNode *default_value_;
+};
+
+class FunctionNode : public SymbolNode {
+public:
+  FunctionNode(const std::string &functionName,
+               std::shared_ptr<TypeNode> returnType,
+               const std::vector<std::shared_ptr<VariableNode>> &parameters);
+  ~FunctionNode() = default;
+
+  std::string toString() override;
+
+  std::shared_ptr<TypeNode> return_type_;
+  std::string function_name_;
+  std::vector<std::shared_ptr<VariableNode>> parameters_;
+};
+
+#endif // CC_PROJECT_SYMBOLNODE_HPP

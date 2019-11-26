@@ -1,5 +1,4 @@
 #include "TypeTable.hpp"
-#include <cstdarg>
 
 TypeTable::TypeTable() {
   types.insert(std::pair<std::string, std::shared_ptr<TypeNode>>(
@@ -68,8 +67,7 @@ std::shared_ptr<const TypeNode> TypeTable::getType(const std::string &cname) {
   }
 }
 
-
-bool TypeTable::removeType(const std::string &cname){
+bool TypeTable::removeType(const std::string &cname) {
   if (!isType(cname))
     return false;
 

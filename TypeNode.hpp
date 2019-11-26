@@ -1,15 +1,11 @@
-//
-// Created by ortyomka on 16.11.2019.
-//
-
-#ifndef TUTORIAL_TYPENODE_HPP
-#define TUTORIAL_TYPENODE_HPP
+#ifndef CC_PROJECT_TYPENODE_HPP
+#define CC_PROJECT_TYPENODE_HPP
 
 #include "Node.hpp"
-#include "VariableNode.hpp"
+#include "SymbolNode.hpp"
 #include <string>
 
-class VariableNode;
+class SymbolNode;
 
 enum Types {
   NoType,
@@ -71,4 +67,4 @@ public:
   std::string toStr() const override ;
 };
 
-#endif // TUTORIAL_TYPENODE_HPP
+#endif // CC_PROJECT_TYPENODE_HPP
