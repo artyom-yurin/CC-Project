@@ -18,17 +18,13 @@ bool SymbolTable::addVariable(const std::string &name,
   return true;
 }
 
-bool SymbolTable::addFunction(const std::string &name,
-                              std::shared_ptr<TypeNode> return_type,
-                              CNode *parameters) {
+bool SymbolTable::addFunction(
+    const std::string &name, std::shared_ptr<TypeNode> return_type,
+    const std::vector<std::shared_ptr<VariableNode>> &parameters) {
   if (isFunction(name))
     return false;
 
-  // TODO convert parameters to vector
-  std::vector<std::shared_ptr<VariableNode>> parameterList = {};
-
-  auto function =
-      std::make_shared<FunctionNode>(name, return_type, parameterList);
+  auto function = std::make_shared<FunctionNode>(name, return_type, parameters);
 
   functions_.insert(
       std::pair<std::string, std::shared_ptr<FunctionNode>>(name, function));

@@ -1,13 +1,6 @@
 #include "TypeTable.hpp"
 
-TypeTable::TypeTable() {
-  types.insert(std::pair<std::string, std::shared_ptr<TypeNode>>(
-      "integer", std::make_unique<SimpleType>("integer")));
-  types.insert(std::pair<std::string, std::shared_ptr<TypeNode>>(
-      "boolean", std::make_unique<SimpleType>("boolean")));
-  types.insert(std::pair<std::string, std::shared_ptr<TypeNode>>(
-      "real", std::make_unique<SimpleType>("real")));
-}
+TypeTable::TypeTable() { types = {}; }
 
 bool TypeTable::isType(const std::string &cname) {
   return types.find(cname) != types.end();
@@ -18,8 +11,7 @@ bool TypeTable::addSimpleType(const std::string &cname,
   if (isType(cname))
     return false;
 
-  types.insert(
-      std::pair<std::string, std::shared_ptr<TypeNode>>(cname, type));
+  types.insert(std::pair<std::string, std::shared_ptr<TypeNode>>(cname, type));
 
   return true;
 }
@@ -37,12 +29,11 @@ bool TypeTable::addArrayType(const std::string &cname, CNode *expression,
   return true;
 }
 
-bool TypeTable::addRecordType(const std::string &cname, CNode *record) {
+bool TypeTable::addRecordType(
+    const std::string &cname,
+    const std::vector<std::shared_ptr<VariableNode>> &fields) {
   if (isType(cname))
     return false;
-
-  // TODO convert CNode's children to VariableNode
-  std::vector<std::shared_ptr<VariableNode>> fields;
 
   auto recordType = std::make_shared<RecordType>(fields);
 

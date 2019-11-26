@@ -13,11 +13,11 @@ public:
   bool addVariable(const std::string &name, std::shared_ptr<TypeNode> type,
                    CNode *expression);
 
-  bool addFunction(const std::string &name,
-                   std::shared_ptr<TypeNode> return_type, CNode *parameters);
+  bool
+  addFunction(const std::string &name, std::shared_ptr<TypeNode> return_type,
+              const std::vector<std::shared_ptr<VariableNode>> &parameters);
 
   std::shared_ptr<VariableNode> getVariable(const std::string &name);
-
 
   std::shared_ptr<FunctionNode> getFunction(const std::string &name);
 

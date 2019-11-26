@@ -12,9 +12,11 @@ public:
 
   bool addSimpleType(const std::string &cname, std::shared_ptr<TypeNode> type);
 
-  bool addArrayType(const std::string &cname, CNode *expression, std::shared_ptr<TypeNode> type);
+  bool addArrayType(const std::string &cname, CNode *expression,
+                    std::shared_ptr<TypeNode> type);
 
-  bool addRecordType(const std::string &cname, CNode *record);
+  bool addRecordType(const std::string &cname,
+                     const std::vector<std::shared_ptr<VariableNode>> &fields);
 
   std::shared_ptr<TypeNode> getType(const std::string &cname);
 
