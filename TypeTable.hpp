@@ -6,7 +6,7 @@
 
 class TypeTable {
 public:
-  TypeTable();
+  TypeTable() = default;
 
   ~TypeTable() = default;
 

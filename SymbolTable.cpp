@@ -1,8 +1,4 @@
 #include "SymbolTable.hpp"
-SymbolTable::SymbolTable() {
-  variables_ = {};
-  functions_ = {};
-}
 
 bool SymbolTable::addVariable(const std::string &name,
                               std::shared_ptr<TypeNode> type,

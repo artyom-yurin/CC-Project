@@ -1,7 +1,5 @@
 #include "TypeTable.hpp"
 
-TypeTable::TypeTable() { types = {}; }
-
 bool TypeTable::isType(const std::string &cname) {
   return types.find(cname) != types.end();
 }
