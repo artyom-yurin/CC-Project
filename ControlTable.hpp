@@ -8,7 +8,7 @@
 class ControlTable {
 public:
   ControlTable();
-  ControlTable(std::shared_ptr<ControlTable> parent);
+  ControlTable(ControlTable* parent);
   ~ControlTable() = default;
 
   bool addSimpleType(const std::string &name,
@@ -31,21 +31,20 @@ public:
   getSubScopeTable(const std::string &scope_name) const;
 
   // add subScope
-  bool addSubScope(const std::string &scope_name,
-                   std::shared_ptr<ControlTable> sub_scope);
+  bool addSubScope(const std::string &scope_name);
 
   // for inner structures
   // index will be number of scope
   // in superscope start from 1
   // return key
-  std::string addSubScope(std::shared_ptr<ControlTable> sub_scope);
+  std::string addSubScope();
 
 private:
   std::shared_ptr<VariableNode> getVariable(const std::string &name);
   std::shared_ptr<FunctionNode> getFunction(const std::string &name);
   std::shared_ptr<TypeNode> getType(const std::string &name);
 
-  std::weak_ptr<ControlTable> parent_;
+  ControlTable* parent_;
   std::unique_ptr<TypeTable> type_table_;
   std::unique_ptr<SymbolTable> symbol_table_;
   std::unordered_map<std::string, std::shared_ptr<ControlTable>> sub_scopes_;

@@ -1,6 +1,6 @@
 #include "ControlTable.hpp"
 ControlTable::ControlTable() {
-  parent_.reset();
+  parent_ = nullptr;
   type_table_ = std::make_unique<TypeTable>();
   symbol_table_ = std::make_unique<SymbolTable>();
   type_table_->addSimpleType("integer",
@@ -9,7 +9,7 @@ ControlTable::ControlTable() {
   type_table_->addSimpleType("boolean",
                              std::make_shared<SimpleType>("boolean"));
 }
-ControlTable::ControlTable(std::shared_ptr<ControlTable> parent) {
+ControlTable::ControlTable(ControlTable* parent) {
   parent_ = parent;
   type_table_ = std::make_unique<TypeTable>();
   symbol_table_ = std::make_unique<SymbolTable>();
@@ -55,24 +55,24 @@ bool ControlTable::addFunction(const std::string &name,
 bool ControlTable::isVariable(const std::string &name) {
   if (symbol_table_->isVariable(name))
     return true;
-  if (!parent_.expired())
-    return parent_.lock()->isVariable(name);
+  if (parent_ != nullptr)
+    return parent_->isVariable(name);
   return false;
 }
 
 bool ControlTable::isFunction(const std::string &name) {
   if (symbol_table_->isFunction(name))
     return true;
-  if (!parent_.expired())
-    return parent_.lock()->isFunction(name);
+  if (parent_ != nullptr)
+    return parent_->isFunction(name);
   return false;
 }
 
 bool ControlTable::isType(const std::string &name) {
   if (type_table_->isType(name))
     return true;
-  if (!parent_.expired())
-    return parent_.lock()->isType(name);
+  if (parent_ != nullptr)
+    return parent_->isType(name);
   return false;
 }
 
@@ -88,18 +88,19 @@ ControlTable::getSubScopeTable(const std::string &scope_name) const {
 
 
 
-bool ControlTable::addSubScope(const std::string &scope_name, std::shared_ptr<ControlTable> sub_scope) {
+bool ControlTable::addSubScope(const std::string &scope_name) {
   auto scope = sub_scopes_.find(scope_name);
   if (scope != sub_scopes_.end())
     return false;
+  auto sub_scope = std::make_shared<ControlTable>(this);
   sub_scopes_.insert(std::pair<std::string, std::shared_ptr<ControlTable>>(
       scope_name, sub_scope));
   return true;
 }
 
-std::string ControlTable::addSubScope(std::shared_ptr<ControlTable> sub_scope) {
+std::string ControlTable::addSubScope() {
   std::string key_scope = std::to_string(sub_scopes_.size() + 1);
-  if (addSubScope(key_scope, sub_scope))
+  if (addSubScope(key_scope))
     return key_scope;
   return "";
 }
@@ -109,8 +110,8 @@ ControlTable::getVariable(const std::string &name) {
   auto result = symbol_table_->getVariable(name);
   if (result != nullptr)
     return result;
-  if (!parent_.expired())
-    return parent_.lock()->getVariable(name);
+  if (parent_ != nullptr)
+    return parent_->getVariable(name);
   return nullptr;
 }
 
@@ -119,15 +120,15 @@ ControlTable::getFunction(const std::string &name) {
   auto result = symbol_table_->getFunction(name);
   if (result != nullptr)
     return result;
-  if (!parent_.expired())
-    return parent_.lock()->getFunction(name);
+  if (parent_ != nullptr)
+    return parent_->getFunction(name);
   return nullptr;
 }
 std::shared_ptr<TypeNode> ControlTable::getType(const std::string &name) {
   auto result = type_table_->getType(name);
   if (result != nullptr)
     return result;
-  if (!parent_.expired())
-    return parent_.lock()->getType(name);
+  if (parent_ != nullptr)
+    return parent_->getType(name);
   return nullptr;
 }
