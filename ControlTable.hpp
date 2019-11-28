@@ -20,7 +20,7 @@ public:
   bool addVariable(const std::string &name, const std::string &type,
                    CNode *expression);
   bool addFunction(const std::string &name, const std::string &return_type,
-                   CNode *paramaters);
+                   CNode *parameters);
 
   bool isVariable(const std::string &name);
   bool isFunction(const std::string &name);
@@ -40,8 +40,8 @@ public:
   std::string addSubScope();
 
 private:
-  std::shared_ptr<VariableNode> getVariable(const std::string &name);
-  std::shared_ptr<FunctionNode> getFunction(const std::string &name);
+    std::shared_ptr<FunctionNode> getFunction(const std::string &name);
+    std::shared_ptr<VariableNode> getVariable(const std::string &name);
   std::shared_ptr<TypeNode> getType(const std::string &name);
 
   ControlTable* parent_;
