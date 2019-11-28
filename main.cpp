@@ -13,5 +13,17 @@ int main(int argc, char *argv[]) {
   assert(ccc->addSimpleType("some", "integer"));
   assert(ccc->isType("some"));
   assert(!(cc->isType("some")));
+  CNode*parameters = new CNode("parameters");
+  CNode*param1 = new CNode("parameter_declaration");
+  param1 ->children.push_back(new CNode("x"));
+  param1 ->children.push_back(new CNode("integer"));
+
+  CNode*param2 = new CNode("parameter_declaration");
+  param2->children.push_back(new CNode("y"));
+  param2->children.push_back(new CNode("boolean"));
+  parameters->children.push_back(param1);
+  parameters->children.push_back(param2);
+
+  assert(cc->addFunction("Test", "integer", parameters));
   return 0;
 }
