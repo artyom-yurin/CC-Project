@@ -13,5 +13,6 @@ int main(int argc, char *argv[]) {
   assert(ccc->addSimpleType("some", "integer"));
   assert(ccc->isType("some"));
   assert(!(cc->isType("some")));
+
   return 0;
 }

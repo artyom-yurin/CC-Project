@@ -25,4 +25,11 @@ RecordType::RecordType(const std::vector<std::shared_ptr<VariableNode>> &fields)
   this->fields = fields;
 }
 
-std::string RecordType::toStr() const { return "Record type"; /*TODO Print fields*/ }
+std::string RecordType::toStr() const { 
+    std::string result = "Record type\n"; 
+    /*TODO Print fields*/ 
+    for (int i=0; i < fields.size(); i++) {
+        result += fields[i]->toString() + "\n";
+    }
+    return result;
+}

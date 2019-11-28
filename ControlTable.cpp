@@ -1,4 +1,6 @@
 #include "ControlTable.hpp"
+#include <iostream>
+
 ControlTable::ControlTable() {
   parent_ = nullptr;
   type_table_ = std::make_unique<TypeTable>();
@@ -30,8 +32,28 @@ bool ControlTable::addArrayType(const std::string &name,
   return type_table_->addArrayType(name, expression, type);
 }
 bool ControlTable::addRecordType(const std::string &name, CNode *fields) {
-  // TODO convert fields to list
   std::vector<std::shared_ptr<VariableNode>> fields_list = {};
+  if (fields->name != "variables_declaration") {
+    return false;
+  }else {
+    int amount_children = fields->children.size();
+    for (int i=0; i < amount_children; i++) {
+        CNode *child = fields->children[i];
+        if (child->name == "variable_declaration") {
+            auto type = getType(child->children[1]->name);
+            if (type != nullptr) {
+                auto new_field = std::make_shared<VariableNode>(child->children[0]->name, type,child->children[2]);
+                fields_list.push_back(new_field);
+            }else
+                return false;
+        }else if (child->name == "variable_declaration_auto") {
+            auto type = std::make_shared<AutoType>();
+            auto new_field = std::make_shared<VariableNode>(child->children[0]->name, type,child->children[1]);
+            fields_list.push_back(new_field);
+        }else
+            return false;
+    }
+  }
   return type_table_->addRecordType(name, fields_list);
 }
 bool ControlTable::addVariable(const std::string &name, const std::string &type,

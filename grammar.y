@@ -60,7 +60,7 @@ simple_declaration
 
 variable_declarartion
     : VAR IDENTIFIER COLON type variable_expression { $$ = add_node("variable_declarartion", 3, $2, $4, $5);}
-    | VAR IDENTIFIER IS expression { $$ = add_node("variable_declarartion", 2, $2, $4);}
+    | VAR IDENTIFIER IS expression { $$ = add_node("variable_declarartion_auto", 2, $2, $4);}
     ;
 
 variable_expression
