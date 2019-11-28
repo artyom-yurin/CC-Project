@@ -47,6 +47,7 @@ bool ControlTable::addFunction(const std::string &name,
   auto typeNode = getType(return_type);
   if (typeNode == nullptr)
     return false;
+  // SDELAL VETKU
   // TODO convert parameters to list
   std::vector<std::shared_ptr<VariableNode>> paramaters_list = {};
   return symbol_table_->addFunction(name, typeNode, paramaters_list);
