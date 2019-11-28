@@ -22,5 +22,10 @@ FunctionNode::FunctionNode(
 }
 
 std::string FunctionNode::toString() {
-  return return_type_->toStr() + " " + function_name_;
+    std::string result = return_type_->toStr() + " " + function_name_ + "(";
+    for(auto elem: parameters_){
+        result += elem->toString() + " ";
+    }
+
+    return result + ")";
 }
