@@ -1,7 +1,7 @@
 #ifndef CC_PROJECT_TYPETABLE_HPP
 #define CC_PROJECT_TYPETABLE_HPP
 
-#include "TypeNode.hpp"
+#include "semantic_analyzer/type_table/TypeNode.hpp"
 #include <unordered_map>
 
 class TypeTable {

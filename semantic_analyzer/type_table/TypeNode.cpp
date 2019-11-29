@@ -1,5 +1,5 @@
-#include "TypeNode.hpp"
-#include "SymbolNode.hpp"
+#include "semantic_analyzer/type_table/TypeNode.hpp"
+#include "semantic_analyzer/symbol_table/SymbolNode.hpp"
 
 Types TypeNode::getType() const { return type; }
 

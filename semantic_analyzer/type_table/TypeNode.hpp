@@ -1,7 +1,7 @@
 #ifndef CC_PROJECT_TYPENODE_HPP
 #define CC_PROJECT_TYPENODE_HPP
 
-#include "Node.hpp"
+#include "common/Node.hpp"
 #include <string>
 
 class VariableNode;

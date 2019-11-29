@@ -1,4 +1,4 @@
-#include "TypeTable.hpp"
+#include "semantic_analyzer/type_table/TypeTable.hpp"
 
 bool TypeTable::isType(const std::string &cname) {
   return types.find(cname) != types.end();

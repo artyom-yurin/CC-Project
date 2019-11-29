@@ -1,7 +1,7 @@
 #ifndef CC_PROJECT_SYMBOLTABLE_HPP
 #define CC_PROJECT_SYMBOLTABLE_HPP
 
-#include "SymbolNode.hpp"
+#include "semantic_analyzer/symbol_table/SymbolNode.hpp"
 #include <unordered_map>
 
 class SymbolTable {

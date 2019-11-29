@@ -1,5 +1,4 @@
-#include "SymbolTable.hpp"
-
+#include "LexerSymbolTable.hpp"
 
 Node::Node() {
     next = NULL;    
@@ -13,13 +12,13 @@ Node::Node(std::string value, int class_name) {
 }
 
 
-SymbolTable::SymbolTable() {
+LexerSymbolTable::LexerSymbolTable() {
     for (int i = 0; i < MAX_HASH; i++) 
         nodes[i] = NULL;
 }
 
 
-int SymbolTable::hashSum(std::string node_value) {
+int LexerSymbolTable::hashSum(std::string node_value) {
     int hash_sum = 0;
 
     for (char sym : node_value) {
@@ -31,7 +30,7 @@ int SymbolTable::hashSum(std::string node_value) {
 }
 
 
-bool SymbolTable::insert(std::string value, int class_name) {
+bool LexerSymbolTable::insert(std::string value, int class_name) {
     int hash_id = hashSum(value);
     Node* node = new Node(value, class_name);
     if (nodes[hash_id] == NULL) {
@@ -52,7 +51,7 @@ bool SymbolTable::insert(std::string value, int class_name) {
 }
 
 
-int SymbolTable::find(std::string value) {
+int LexerSymbolTable::find(std::string value) {
     int hash_id = hashSum(value);
     Node* start = nodes[hash_id];
 

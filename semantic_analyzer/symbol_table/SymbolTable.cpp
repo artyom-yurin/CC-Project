@@ -1,4 +1,4 @@
-#include "SymbolTable.hpp"
+#include "semantic_analyzer/symbol_table/SymbolTable.hpp"
 
 bool SymbolTable::addVariable(const std::string &name,
                               std::shared_ptr<TypeNode> type,
