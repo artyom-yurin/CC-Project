@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SymbolTable.hpp"
+#include "LexerSymbolTable.hpp"
 #include "Token.hpp"
 #include <iostream>
 #include <string>
@@ -11,7 +11,7 @@ private:
   std::string::iterator src_iter;
 
 public:
-  SymbolTable symbol_table;
+  LexerSymbolTable symbol_table;
 
 public:
   Lexer(std::string src);

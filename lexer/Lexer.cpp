@@ -1,5 +1,7 @@
 #include "Lexer.hpp"
-#include "../yacc.hpp"
+#include "grammar/Parser.hpp"
+
+using namespace yy;
 
 Lexer::Lexer(std::string src) {
   this->src = src;
@@ -48,15 +50,31 @@ void Lexer::count(std::string str) {
 void Lexer::createSymbolTable() {
   // Feel the table keywords
   std::pair<std::string, int> keywords[] = {
-      {"var", VAR},         {"is", IS},       {"type", TYPE},
-      {"routine", ROUTINE}, {"end", END},     {"record", RECORD},
-      {"array", ARRAY},     {"while", WHILE}, {"loop", LOOP},
-      {"for", FOR},         {"in", IN},       {"reverse", REVERSE},
-      {"return", RETURN},   {"if", IF},       {"then", THEN},
-      {"else", ELSE},       {"and", AND},     {"or", OR},
-      {"xor", XOR}, {"integer", INTEGER},     {"real", REAL},
-      {"boolean", BOOLEAN}, {"true", TRUE},   {"false", FALSE},
-      {"not", NOT},
+      {"var", parser::token::yytokentype::VAR},
+      {"is", parser::token::yytokentype::IS},
+      {"type", parser::token::yytokentype::TYPE},
+      {"routine", parser::token::yytokentype::ROUTINE},
+      {"end", parser::token::yytokentype::END},
+      {"record", parser::token::yytokentype::RECORD},
+      {"array", parser::token::yytokentype::ARRAY},
+      {"while", parser::token::yytokentype::WHILE},
+      {"loop", parser::token::yytokentype::LOOP},
+      {"for", parser::token::yytokentype::FOR},
+      {"in", parser::token::yytokentype::IN},
+      {"reverse", parser::token::yytokentype::REVERSE},
+      {"return", parser::token::yytokentype::RETURN},
+      {"if", parser::token::yytokentype::IF},
+      {"then", parser::token::yytokentype::THEN},
+      {"else", parser::token::yytokentype::ELSE},
+      {"and", parser::token::yytokentype::AND},
+      {"or", parser::token::yytokentype::OR},
+      {"xor", parser::token::yytokentype::XOR},
+      {"integer", parser::token::yytokentype::INTEGER},
+      {"real", parser::token::yytokentype::REAL},
+      {"boolean", parser::token::yytokentype::BOOLEAN},
+      {"true", parser::token::yytokentype::TRUE},
+      {"false", parser::token::yytokentype::FALSE},
+      {"not", parser::token::yytokentype::NOT},
   };
 
   for (auto keyword : keywords)
@@ -70,8 +88,8 @@ bool Lexer::isLetter(char c) {
 }
 
 bool Lexer::isOtherSymbol(char c) {
-  return (c >= '(' && c <= '/') || (c >= ':' && c <= '>') ||
-  (c == '[') || (c = ']') || (c == '{') || (c == '}') || (c == '%');
+  return (c >= '(' && c <= '/') || (c >= ':' && c <= '>') || (c == '[') ||
+         (c = ']') || (c == '{') || (c == '}') || (c == '%');
 }
 
 Token Lexer::parseNumber() {
@@ -94,7 +112,7 @@ Token Lexer::parseNumber() {
         value += *src_iter;
         src_iter++;
       }
-      token.class_name = REAL_LITERAL;
+      token.class_name = parser::token::yytokentype::REAL_LITERAL;
       token.value = value;
       return token;
     } else {
@@ -105,7 +123,7 @@ Token Lexer::parseNumber() {
   if (value == "")
     value = "0";
 
-  token.class_name = INTEGER_LITERAL;
+  token.class_name = parser::token::yytokentype::INTEGER_LITERAL;
   token.value = value;
   return token;
 }
@@ -122,8 +140,8 @@ Token Lexer::parseIdentifier() {
   int class_name = symbol_table.find(value);
 
   if (class_name == -1) {
-    class_name = IDENTIFIER;
-    symbol_table.insert(value, IDENTIFIER);
+    class_name = parser::token::yytokentype::IDENTIFIER;
+    symbol_table.insert(value, parser::token::yytokentype::IDENTIFIER);
   }
 
   token.value = value;
@@ -137,73 +155,72 @@ Token Lexer::parseOtherSymbol() {
 
   if (*src_iter == '+') {
     token.value = "+";
-    token.class_name = PLUS_SIGN;
+    token.class_name = parser::token::yytokentype::PLUS_SIGN;
   } else if (*src_iter == '-') {
     token.value = "-";
-    token.class_name = MINUS_SIGN;
+    token.class_name = parser::token::yytokentype::MINUS_SIGN;
   } else if (*src_iter == '*') {
     token.value = "*";
-    token.class_name = MULT_SIGN;
+    token.class_name = parser::token::yytokentype::MULT_SIGN;
   } else if (*src_iter == '/') {
     if (*(src_iter + 1) == '=' && (src_iter + 1 != src.end())) {
-	token.value = "/=";
-	token.class_name = NEQ_SIGN;
-    }
-    else {
-	token.value = "/";
-    	token.class_name = DIV_SIGN;
+      token.value = "/=";
+      token.class_name = parser::token::yytokentype::NEQ_SIGN;
+    } else {
+      token.value = "/";
+      token.class_name = parser::token::yytokentype::DIV_SIGN;
     }
   } else if (*src_iter == '%') {
     token.value = "%";
-    token.class_name = MOD_SIGN;
+    token.class_name = parser::token::yytokentype::MOD_SIGN;
   } else if (*src_iter == '=') {
     token.value = '=';
-    token.class_name = EQ_SIGN;
+    token.class_name = parser::token::yytokentype::EQ_SIGN;
   } else if (*src_iter == '<') {
     if (src_iter + 1 != src.end() && *(src_iter + 1) == '=') {
       src_iter++;
       token.value = "<=";
-      token.class_name = LET_SIGN;
+      token.class_name = parser::token::yytokentype::LET_SIGN;
     } else {
       token.value = "<";
-      token.class_name = LT_SIGN;
+      token.class_name = parser::token::yytokentype::LT_SIGN;
     }
   } else if (*src_iter == '>') {
     if (src_iter + 1 != src.end() && *(src_iter + 1) == '=') {
       src_iter++;
       token.value = ">=";
-      token.class_name = GET_SIGN;
+      token.class_name = parser::token::yytokentype::GET_SIGN;
     } else {
       token.value = ">";
-      token.class_name = GT_SIGN;
+      token.class_name = parser::token::yytokentype::GT_SIGN;
     }
   } else if (*src_iter == '[') {
     token.value = "[";
-    token.class_name = L_SQ_BR;
+    token.class_name = parser::token::yytokentype::L_SQ_BR;
   } else if (*src_iter == '(') {
     token.value = "(";
-    token.class_name = L_BR;
+    token.class_name = parser::token::yytokentype::L_BR;
   } else if (*src_iter == ']') {
     token.value = "]";
-    token.class_name = R_SQ_BR;
+    token.class_name = parser::token::yytokentype::R_SQ_BR;
   } else if (*src_iter == ')') {
     token.value = ")";
-    token.class_name = R_BR;
+    token.class_name = parser::token::yytokentype::R_BR;
   } else if (*src_iter == ':') {
     if (src_iter + 1 != src.end() && *(src_iter + 1) == '=') {
       src_iter++;
       token.value = ":=";
-      token.class_name = ASSIGNMENT_SIGN;
+      token.class_name = parser::token::yytokentype::ASSIGNMENT_SIGN;
     } else {
       token.value = ":";
-      token.class_name = COLON;
+      token.class_name = parser::token::yytokentype::COLON;
     }
   } else if (*src_iter == ',') {
     token.value = ",";
-    token.class_name = COMMA;
+    token.class_name = parser::token::yytokentype::COMMA;
   } else if (*src_iter == '.') {
     token.value = ".";
-    token.class_name = DOT;
+    token.class_name = parser::token::yytokentype::DOT;
   }
   src_iter++;
   return token;

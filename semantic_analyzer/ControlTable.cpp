@@ -1,4 +1,4 @@
-#include "ControlTable.hpp"
+#include "semantic_analyzer/ControlTable.hpp"
 
 ControlTable::ControlTable() {
   parent_ = nullptr;

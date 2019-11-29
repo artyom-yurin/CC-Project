@@ -1,5 +1,5 @@
-#include "SymbolNode.hpp"
-#include "TypeNode.hpp"
+#include "semantic_analyzer/symbol_table/SymbolNode.hpp"
+#include "semantic_analyzer/type_table/TypeNode.hpp"
 
 VariableNode::VariableNode(const std::string &variableName,
                            std::shared_ptr<TypeNode> variableType,

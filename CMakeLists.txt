@@ -1,47 +1,23 @@
 cmake_minimum_required(VERSION 3.10)
 
 # set the project name
-project(Tutorial)
+project(ICompiler)
+
+SET(BASEPATH "${CMAKE_SOURCE_DIR}")
+INCLUDE_DIRECTORIES("${BASEPATH}")
 
 # add the executable
-add_executable(Tutorial
+add_subdirectory(lexer)
+add_subdirectory(common)
+add_subdirectory(grammar)
+add_subdirectory(semantic_analyzer)
+
+add_executable(ICompiler
         main.cpp
         )
-target_link_libraries(Tutorial
-        grammar
+target_link_libraries(ICompiler
+        common
+        Parser
+        Lexer
         ControlTable
-        )
-
-add_library(grammar
-        Node.cpp
-        )
-
-add_library(ControlTable
-        ControlTable.cpp
-        )
-
-target_link_libraries(ControlTable
-        SymbolTable
-        TypeTable
-        grammar
-        )
-
-add_library(TypeTable
-        TypeTable.cpp
-        TypeNode.cpp
-        )
-
-target_link_libraries(TypeTable
-        SymbolTable
-        grammar
-        )
-
-add_library(SymbolTable
-        SymbolTable.cpp
-        SymbolNode.cpp
-        )
-
-target_link_libraries(SymbolTable
-        TypeTable
-        grammar
         )

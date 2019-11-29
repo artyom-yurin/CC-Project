@@ -1,3 +1,5 @@
 /.idea/*
-/parser
 /cmake-build-debug/
+/build/
+grammar/Parser.*
+grammar/*.hh

@@ -1,24 +1,23 @@
 %define parse.error verbose
-
+%skeleton "lalr1.cc"
+%locations
+%token-table
+%glr-parser
+%lex-param {void *lexer}
+%parse-param {void *lexer} {void **root}
 %{
-#include <cstdio>
 #include <stdio.h>
 #include <iostream>
 #include <string>
-#include <fstream>
-#include <sstream>
-#include <stdlib.h>
 #include <stdarg.h>
-#include "lexer/Lexer.hpp"
 #include "lexer/Token.hpp"
-#include "Node.hpp"
+#include "lexer/Lexer.hpp"
+#include "common/Node.hpp"
 
-int yylex(void);
-void yyerror(char const *s);
+
+//void yyerror(yycontrol& some, char const *s);
 
 #define YYSTYPE CNode*
-Lexer* lexer;
-CNode *root;
 
 CNode* add_node(const std::string& name, int argc, ...);
 void print_tree(CNode* root);
@@ -26,6 +25,14 @@ void print_node(CNode* node, int margin);
 void pick_up_children(CNode* parent, CNode* bad_parent);
 void add_child(CNode* parent, CNode* child);
 %}
+
+%code
+{
+    namespace yy {
+    int yylex (YYSTYPE *lvalp, location *llocp, void* lexer);
+    void error (const location& loc, const std::string& msg);
+    }
+}
 
 %token VAR IS
 %token ROUTINE END
@@ -49,8 +56,8 @@ void add_child(CNode* parent, CNode* child);
 %%
 program
     : {$$ = nullptr;}
-    | program simple_declaration { $$ = add_node("program", 0); pick_up_children($$, $1); add_child($$, $2); root = $$;}
-    | program routine_declaration { $$ = add_node("program", 0); pick_up_children($$, $1); add_child($$, $2);root = $$;}
+    | program simple_declaration { $$ = add_node("program", 0); pick_up_children($$, $1); add_child($$, $2); *root = $$;}
+    | program routine_declaration { $$ = add_node("program", 0); pick_up_children($$, $1); add_child($$, $2); *root = $$;}
     ;
 
 simple_declaration
@@ -270,24 +277,21 @@ void clear_node(CNode * node){
 	delete node;
 }
 
-void yyerror(char const *s)
-{
-	clear_node(root);
-	root = nullptr;
-	fflush(stdout);
-	printf("\n%*s\n%*s\n", lexer->column, "^", lexer->column, s);
+void yy::parser::error (const location& loc, const std::string& msg){
+    clear_node((CNode*)(*root));
+    *root = nullptr;
+    fflush(stdout);
+    printf("\n%*s\n%*s\n", ((Lexer*)lexer)->column, "^", ((Lexer*)lexer)->column, msg.c_str());
 }
-
-int yylex()
-{
-  if (lexer == nullptr) return 0;
-  Token currentToken = lexer->next();
-  int tokenType = currentToken.class_name;
-  if (tokenType == 0) {return 0;}
-  yylval = new CNode(currentToken.value);
-  return tokenType;
+int yy::yylex (YYSTYPE *lvalp, location *llocp, void* lexer){
+    if (lexer == nullptr) return 0;
+    Lexer* lexer1 = (Lexer*) lexer;
+    Token currentToken = lexer1->next();
+    int tokenType = currentToken.class_name;
+    if (tokenType == 0) {return 0;}
+    *lvalp = new CNode(currentToken.value);
+    return tokenType;
 }
-
 
 CNode* add_node(const std::string& name, int argc, ...) {
 	va_list argp;
@@ -312,40 +316,4 @@ void pick_up_children(CNode* parent, CNode* bad_parent){
 void add_child(CNode* parent, CNode* child){
     if (parent == nullptr || child == nullptr) return;
     parent->children.push_back(child);
-}
-
-void print_node(CNode* node, int margin) {
-  if (node == nullptr) return;
-  for (int i = 0; i < margin; i++)
-			std::cout << "   ";
-  std::cout << "<" << node->name << ">\n";
-  for (int j = 0; j < node->children.size(); j++)
-	  print_node(node->children[j], margin + 1);
-}
-
-void print_tree(CNode* root) {
-  	print_node(root, 0);
-}
-
-
-
-int main(int argc, char** argv){
-    if (argc != 2) {
-        std::cerr << "Invalid number of args" << std::endl;
-        std::cerr << "Usage: " << argv[0] << " <path_to_source>" << std::endl;
-        return 1;
-    }
-
-    std::ifstream src_file(argv[1]);
-    std::stringstream buffer;
-
-    buffer << src_file.rdbuf();
-
-    lexer = new Lexer(buffer.str());
-
-    yyparse();
-
-    print_tree(root);
-
-    return 0;
 }

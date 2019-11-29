@@ -18,12 +18,12 @@ class Node {
 };
 
 
-class SymbolTable {
+class LexerSymbolTable {
     public:
         Node* nodes[MAX_HASH];
 
     public:
-        SymbolTable();
+        LexerSymbolTable();
 
         int hashSum(std::string node_value);
 

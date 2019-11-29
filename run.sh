@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-bison -d --output yacc.cpp grammar.y
-g++ yacc.cpp ./lexer/Lexer.cpp ./lexer/Token.cpp ./lexer/SymbolTable.cpp Node.cpp -o parser
-rm yacc.cpp yacc.hpp
-./parser test.txt
+echo $1
+./build.sh || exit 1
+
+cp $1 ./build
+
+cd build
+
+./ICompiler $1

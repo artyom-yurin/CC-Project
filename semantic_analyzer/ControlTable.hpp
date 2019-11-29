@@ -1,8 +1,8 @@
 #ifndef TUTORIAL_CONTROLTABLE_HPP
 #define TUTORIAL_CONTROLTABLE_HPP
 
-#include "SymbolTable.hpp"
-#include "TypeTable.hpp"
+#include "semantic_analyzer/symbol_table/SymbolTable.hpp"
+#include "semantic_analyzer/type_table/TypeTable.hpp"
 #include <memory>
 
 class ControlTable {
