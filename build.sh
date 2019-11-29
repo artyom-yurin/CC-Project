@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 cd grammar
-bison -d --output Parser.cpp grammar.ypp
+bison --output Parser.cpp grammar.ypp
 cd ..
 
 mkdir -p build
