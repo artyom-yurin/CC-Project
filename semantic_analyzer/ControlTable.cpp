@@ -4,38 +4,44 @@ ControlTable::ControlTable() {
   parent_.reset();
   type_table_ = std::make_unique<TypeTable>();
   symbol_table_ = std::make_unique<SymbolTable>();
-  type_table_->addSimpleType("integer",
+  type_table_->addType("integer",
                              std::make_shared<SimpleType>("integer"));
-  type_table_->addSimpleType("real", std::make_shared<SimpleType>("real"));
-  type_table_->addSimpleType("boolean",
+  type_table_->addType("real", std::make_shared<SimpleType>("real"));
+  type_table_->addType("boolean",
                              std::make_shared<SimpleType>("boolean"));
 }
 
-ControlTable::ControlTable(ControlTable * parent) {
+ControlTable::ControlTable(ControlTable *parent) {
   parent_ = parent->shared_from_this();
   type_table_ = std::make_unique<TypeTable>();
   symbol_table_ = std::make_unique<SymbolTable>();
 }
 
-bool ControlTable::addSimpleType(const std::string &name,
-                                 const std::string originalTypeName) {
-  auto type = getType(originalTypeName);
-  if (type == nullptr)
-    return false;
-  return type_table_->addSimpleType(name, type);
+std::shared_ptr<TypeNode> ControlTable::CNode2TypeNode(CNode *type) {
+  if (type->name != "type")
+    return nullptr;
+
+  CNode *realType = type->children[0];
+  if (realType->name == "array_type") {
+    CNode *exp = realType->children[0];
+    CNode *itemType = realType->children[1];
+    auto typeNode = CNode2TypeNode(itemType);
+    if (typeNode == nullptr)
+      return nullptr;
+    return std::make_shared<ArrayType>(exp, typeNode);
+  } else if (realType->name == "record_type") {
+    CNode *fields = realType->children[0];
+    std::vector<std::shared_ptr<VariableNode>> fields_list;
+    if (!CNode2FieldList(fields, fields_list))
+      return nullptr;
+    return std::make_shared<RecordType>(fields_list);
+  } else {
+    return getType(realType->name);
+  }
 }
 
-bool ControlTable::addArrayType(const std::string &name,
-                                const std::string &item_type,
-                                CNode *expression) {
-  auto type = getType(item_type);
-  if (type == nullptr)
-    return false;
-  return type_table_->addArrayType(name, expression, type);
-}
-
-bool ControlTable::addRecordType(const std::string &name, CNode *fields) {
-  std::vector<std::shared_ptr<VariableNode>> fields_list = {};
+bool ControlTable::CNode2FieldList(
+    CNode *fields, std::vector<std::shared_ptr<VariableNode>> &fields_list) {
   if (fields->name != "variables_declaration") {
     return false;
   }
@@ -44,7 +50,7 @@ bool ControlTable::addRecordType(const std::string &name, CNode *fields) {
     CNode *child = fields->children[i];
     std::shared_ptr<TypeNode> type;
     if (child->name == "variable_declaration") {
-      type = getType(child->children[1]->name);
+      type = CNode2TypeNode(child->children[1]);
       if (type == nullptr)
         return false;
     } else if (child->name == "variable_declaration_auto") {
@@ -52,19 +58,17 @@ bool ControlTable::addRecordType(const std::string &name, CNode *fields) {
     } else {
       return false;
     }
-
     auto new_field = std::make_shared<VariableNode>(child->children[0]->name,
                                                     type, child->children[1]);
     fields_list.push_back(new_field);
   }
-  return type_table_->addRecordType(name, fields_list);
+  return true;
 }
 
-bool ControlTable::addVariable(const std::string &name, const std::string &type,
-                               CNode *expression) {
-  auto typeNode = getType(type);
-  if (typeNode == nullptr)
+bool ControlTable::addAutoVariable(const std::string &name, CNode *expression) {
+  if (expression == nullptr)
     return false;
+  auto typeNode = std::make_shared<AutoType>();
   return symbol_table_->addVariable(name, typeNode, expression);
 }
 
@@ -178,4 +182,18 @@ std::shared_ptr<ControlTable> ControlTable::getParent() const {
   if (parent_.expired())
     return nullptr;
   return parent_.lock();
+}
+bool ControlTable::addType(const std::string &name, CNode *type) {
+  auto typeNode = CNode2TypeNode(type);
+  if (type == nullptr)
+    return false;
+  return type_table_->addType(name, typeNode);
+}
+
+bool ControlTable::addVariable(const std::string &name, CNode *type,
+                               CNode *expression) {
+  auto typeNode = CNode2TypeNode(type);
+  if (typeNode == nullptr)
+    return false;
+  return symbol_table_->addVariable(name, typeNode, expression);
 }

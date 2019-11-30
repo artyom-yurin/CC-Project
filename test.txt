@@ -1,4 +1,8 @@
+var g : integer
+type x is integer
+var h is 1 + 1
 routine main(x: integer, y: boolean) : integer is
+    var h is 1 + 1
     return not x
 end
 routine some(m: someType) : integer is

@@ -5,20 +5,18 @@
 #include "semantic_analyzer/type_table/TypeTable.hpp"
 #include <memory>
 
-class ControlTable : public std::enable_shared_from_this<ControlTable>{
+class ControlTable : public std::enable_shared_from_this<ControlTable> {
 public:
   ControlTable();
-  ControlTable(ControlTable* parent);
+  ControlTable(ControlTable *parent);
   ~ControlTable() = default;
 
-  bool addSimpleType(const std::string &name,
-                     const std::string originalTypeName);
-  bool addArrayType(const std::string &name, const std::string &originalName,
-                    CNode *expression);
-  bool addRecordType(const std::string &name, CNode *fields);
+  bool addType(const std::string &name,
+                     CNode* type);
 
-  bool addVariable(const std::string &name, const std::string &type,
+  bool addVariable(const std::string &name, CNode *type,
                    CNode *expression);
+  bool addAutoVariable(const std::string &name, CNode *expression);
   bool addFunction(const std::string &name, const std::string &return_type,
                    CNode *parameters);
 
@@ -45,6 +43,11 @@ private:
   std::shared_ptr<FunctionNode> getFunction(const std::string &name);
   std::shared_ptr<VariableNode> getVariable(const std::string &name);
   std::shared_ptr<TypeNode> getType(const std::string &name);
+
+  bool CNode2FieldList(CNode *fields,
+                       std::vector<std::shared_ptr<VariableNode>> &fields_list);
+
+  std::shared_ptr<TypeNode> CNode2TypeNode(CNode *type);
 
   std::weak_ptr<ControlTable> parent_;
   std::unique_ptr<TypeTable> type_table_;
