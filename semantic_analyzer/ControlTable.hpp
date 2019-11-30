@@ -17,7 +17,7 @@ public:
   bool addVariable(const std::string &name, CNode *type,
                    CNode *expression);
   bool addAutoVariable(const std::string &name, CNode *expression);
-  bool addFunction(const std::string &name, const std::string &return_type,
+  bool addFunction(const std::string &name, CNode *return_type,
                    CNode *parameters);
 
   bool isVariable(const std::string &name);
@@ -39,6 +39,7 @@ public:
 
   std::shared_ptr<ControlTable> getParent() const;
 
+  bool checkFunctionCall(const std::string& functionName, CNode* arguments);
 private:
   std::shared_ptr<FunctionNode> getFunction(const std::string &name);
   std::shared_ptr<VariableNode> getVariable(const std::string &name);
@@ -47,7 +48,16 @@ private:
   bool CNode2FieldList(CNode *fields,
                        std::vector<std::shared_ptr<VariableNode>> &fields_list);
 
+  bool CNode2ArgList(CNode *args,
+                       std::vector<std::shared_ptr<VariableNode>> &args_list);
+
   std::shared_ptr<TypeNode> CNode2TypeNode(CNode *type);
+
+  bool addType(const std::string &name,
+               std::shared_ptr<TypeNode> type);
+
+  bool addVariable(const std::string &name, std::shared_ptr<TypeNode> type,
+                   CNode *expression);
 
   std::weak_ptr<ControlTable> parent_;
   std::unique_ptr<TypeTable> type_table_;

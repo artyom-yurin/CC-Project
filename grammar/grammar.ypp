@@ -85,12 +85,12 @@ routine_declaration
 
 routine_return_type
     : {$$ = nullptr;}
-    | COLON type { $$ = add_node("routine_return_type", 1, $2);}
+    | COLON type { $$ = $2;}
     ;
 
 routine_parameters
     : {$$ = nullptr;}
-    | parameters { $$ = add_node("routine_parameters", 1, $1);}
+    | parameters { $$ = $1;}
     ;
 
 parameters
@@ -164,12 +164,12 @@ routine_call
 
 arguments
     : {$$ = nullptr;}
-    | expressions { $$ = add_node("arguments", 1, $1);}
+    | expressions { $$ = $1;}
     ;
 
 expressions
-    : expressions COMMA expression { $$ = add_node("expressions", 0);  pick_up_children($$, $1); add_child($$, $2);}
-    | expression { $$ = add_node("expressions", 1, $1);}
+    : expressions COMMA expression { $$ = add_node("arguments", 0);  pick_up_children($$, $1); add_child($$, $2);}
+    | expression { $$ = add_node("arguments", 1, $1);}
     ;
 
 while_loop

@@ -33,3 +33,7 @@ std::string RecordType::toStr() const {
     }
     return result;
 }
+std::string NoTypeNode::toStr() const { return "No type"; }
+NoTypeNode::NoTypeNode() {
+  this->type = Types ::NoType;
+}

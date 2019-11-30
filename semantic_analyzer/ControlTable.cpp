@@ -1,14 +1,13 @@
 #include "semantic_analyzer/ControlTable.hpp"
+#include <unordered_set>
 
 ControlTable::ControlTable() {
   parent_.reset();
   type_table_ = std::make_unique<TypeTable>();
   symbol_table_ = std::make_unique<SymbolTable>();
-  type_table_->addType("integer",
-                             std::make_shared<SimpleType>("integer"));
+  type_table_->addType("integer", std::make_shared<SimpleType>("integer"));
   type_table_->addType("real", std::make_shared<SimpleType>("real"));
-  type_table_->addType("boolean",
-                             std::make_shared<SimpleType>("boolean"));
+  type_table_->addType("boolean", std::make_shared<SimpleType>("boolean"));
 }
 
 ControlTable::ControlTable(ControlTable *parent) {
@@ -18,6 +17,8 @@ ControlTable::ControlTable(ControlTable *parent) {
 }
 
 std::shared_ptr<TypeNode> ControlTable::CNode2TypeNode(CNode *type) {
+  if (type == nullptr)
+    return nullptr;
   if (type->name != "type")
     return nullptr;
 
@@ -32,8 +33,10 @@ std::shared_ptr<TypeNode> ControlTable::CNode2TypeNode(CNode *type) {
   } else if (realType->name == "record_type") {
     CNode *fields = realType->children[0];
     std::vector<std::shared_ptr<VariableNode>> fields_list;
-    if (!CNode2FieldList(fields, fields_list))
-      return nullptr;
+    if (fields != nullptr) {
+      if (!CNode2FieldList(fields, fields_list))
+        return nullptr;
+    }
     return std::make_shared<RecordType>(fields_list);
   } else {
     return getType(realType->name);
@@ -42,6 +45,8 @@ std::shared_ptr<TypeNode> ControlTable::CNode2TypeNode(CNode *type) {
 
 bool ControlTable::CNode2FieldList(
     CNode *fields, std::vector<std::shared_ptr<VariableNode>> &fields_list) {
+  if (fields == nullptr)
+    return false;
   if (fields->name != "variables_declaration") {
     return false;
   }
@@ -72,31 +77,53 @@ bool ControlTable::addAutoVariable(const std::string &name, CNode *expression) {
   return symbol_table_->addVariable(name, typeNode, expression);
 }
 
-bool ControlTable::addFunction(const std::string &name,
-                               const std::string &return_type,
+bool ControlTable::addFunction(const std::string &name, CNode *return_type,
                                CNode *parameters) {
-  auto typeNode = getType(return_type);
-  if (typeNode == nullptr)
-    return false;
-  std::vector<std::shared_ptr<VariableNode>> parameters_list = {};
-  if (parameters->name != "parameters")
-    return false;
-
-  for (int i = 0; i < parameters->children.size(); i++) {
-    if (parameters->children[i]->name != "parameter_declaration") {
+  std::shared_ptr<TypeNode> typeNode = std::make_shared<NoTypeNode>();
+  if (return_type != nullptr) {
+    typeNode = CNode2TypeNode(return_type);
+    if (typeNode == nullptr)
       return false;
-    }
-    if (parameters->children[i]->children.size() != 2)
-      return false;
-    auto name = parameters->children[i]->children[0]->name; // x
-    auto type = getType(parameters->children[i]->children[1]->name);
-    if (type == nullptr) {
-      return false;
-    }
-    auto parameter = std::make_shared<VariableNode>(name, type, nullptr);
-    parameters_list.push_back(parameter);
   }
-  return symbol_table_->addFunction(name, typeNode, parameters_list);
+
+  std::vector<std::shared_ptr<VariableNode>> parameters_list = {};
+  if (parameters != nullptr) {
+    if (parameters->name != "parameters")
+      return false;
+
+    std::unordered_set<std::string> set = {};
+    for (int i = 0; i < parameters->children.size(); i++) {
+      if (parameters->children[i]->name != "parameter_declaration") {
+        return false;
+      }
+      if (parameters->children[i]->children.size() != 2)
+        return false;
+      std::string param_name = parameters->children[i]->children[0]->name;
+      if (set.find(param_name) != set.end()) {
+        return false;
+      }
+      set.insert(param_name);
+      auto type = getType(parameters->children[i]->children[1]->name);
+      if (type == nullptr) {
+        return false;
+      }
+      auto parameter =
+          std::make_shared<VariableNode>(param_name, type, nullptr);
+      parameters_list.push_back(parameter);
+    }
+  }
+
+  if (symbol_table_->addFunction(name, typeNode, parameters_list)) {
+    addSubScope(name);
+    auto subScope = getSubScopeTable(name);
+    for (int i = 0; i < parameters_list.size(); i++) {
+      subScope->addVariable(parameters_list[i]->variable_name_,
+                            parameters_list[i]->variable_type_,
+                            parameters_list[i]->default_value_);
+    }
+    return true;
+  }
+  return false;
 }
 
 bool ControlTable::isVariable(const std::string &name) {
@@ -185,7 +212,7 @@ std::shared_ptr<ControlTable> ControlTable::getParent() const {
 }
 bool ControlTable::addType(const std::string &name, CNode *type) {
   auto typeNode = CNode2TypeNode(type);
-  if (type == nullptr)
+  if (typeNode == nullptr)
     return false;
   return type_table_->addType(name, typeNode);
 }
@@ -196,4 +223,45 @@ bool ControlTable::addVariable(const std::string &name, CNode *type,
   if (typeNode == nullptr)
     return false;
   return symbol_table_->addVariable(name, typeNode, expression);
+}
+
+bool ControlTable::addType(const std::string &name,
+                           std::shared_ptr<TypeNode> type) {
+  if (type == nullptr)
+    return false;
+  return type_table_->addType(name, type);
+}
+
+bool ControlTable::addVariable(const std::string &name,
+                               std::shared_ptr<TypeNode> type,
+                               CNode *expression) {
+  if (type == nullptr)
+    return false;
+  return symbol_table_->addVariable(name, type, expression);
+}
+
+bool ControlTable::checkFunctionCall(const std::string &functionName,
+                                     CNode *arguments) {
+  if (!isFunction(functionName)) {
+    return false;
+  }
+  auto function = getFunction(functionName);
+  auto param = function->parameters_;
+  if (param.size() == 0 and arguments == nullptr)
+    return true;
+  else if (param.size() == arguments->children.size()) {
+
+    std::vector<std::shared_ptr<VariableNode>> arg_list = {};
+    if (!CNode2ArgList(arguments, arg_list)) {
+      return false;
+    }
+    // TODO Compare types and variables;
+    return true;
+  }
+  return false;
+}
+bool ControlTable::CNode2ArgList(
+    CNode *args, std::vector<std::shared_ptr<VariableNode>> &args_list) {
+  // TODO After calculate expression
+  return true;
 }
