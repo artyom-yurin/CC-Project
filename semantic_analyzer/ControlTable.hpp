@@ -5,7 +5,7 @@
 #include "semantic_analyzer/type_table/TypeTable.hpp"
 #include <memory>
 
-class ControlTable {
+class ControlTable : public std::enable_shared_from_this<ControlTable>{
 public:
   ControlTable();
   ControlTable(ControlTable* parent);
@@ -39,12 +39,14 @@ public:
   // return key
   std::string addSubScope();
 
+  std::shared_ptr<ControlTable> getParent() const;
+
 private:
-    std::shared_ptr<FunctionNode> getFunction(const std::string &name);
-    std::shared_ptr<VariableNode> getVariable(const std::string &name);
+  std::shared_ptr<FunctionNode> getFunction(const std::string &name);
+  std::shared_ptr<VariableNode> getVariable(const std::string &name);
   std::shared_ptr<TypeNode> getType(const std::string &name);
 
-  ControlTable* parent_;
+  std::weak_ptr<ControlTable> parent_;
   std::unique_ptr<TypeTable> type_table_;
   std::unique_ptr<SymbolTable> symbol_table_;
   std::unordered_map<std::string, std::shared_ptr<ControlTable>> sub_scopes_;

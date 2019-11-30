@@ -1,8 +1,10 @@
 #include "common/Node.hpp"
-#include "lexer/Lexer.hpp"
 #include "grammar/Parser.hpp"
+#include "lexer/Lexer.hpp"
+#include <assert.h>
 #include <fstream>
 #include <iostream>
+#include <semantic_analyzer/ControlTable.hpp>
 #include <sstream>
 
 void print_node(CNode* node, int margin) {
@@ -19,7 +21,7 @@ void print_tree(CNode* root) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 2) {
+  /*if (argc != 2) {
     std::cerr << "Invalid number of args" << std::endl;
     std::cerr << "Usage: " << argv[0] << " <path_to_source>" << std::endl;
     return 1;
@@ -41,7 +43,13 @@ int main(int argc, char *argv[]) {
   if (root == nullptr)
     return 1;
 
-  print_tree(root);
+  print_tree(root);*/
 
+  std::shared_ptr<ControlTable> cc = std::make_shared<ControlTable>();
+  cc->addSubScope("some");
+  assert(cc->getParent() == nullptr);
+  auto ccc = cc->getSubScopeTable("some");
+  auto r = ccc->getParent();
+  assert(r == cc);
   return 0;
 }

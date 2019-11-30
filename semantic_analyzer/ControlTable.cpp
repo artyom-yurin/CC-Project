@@ -1,7 +1,7 @@
 #include "semantic_analyzer/ControlTable.hpp"
 
 ControlTable::ControlTable() {
-  parent_ = nullptr;
+  parent_.reset();
   type_table_ = std::make_unique<TypeTable>();
   symbol_table_ = std::make_unique<SymbolTable>();
   type_table_->addSimpleType("integer",
@@ -11,8 +11,8 @@ ControlTable::ControlTable() {
                              std::make_shared<SimpleType>("boolean"));
 }
 
-ControlTable::ControlTable(ControlTable *parent) {
-  parent_ = parent;
+ControlTable::ControlTable(ControlTable * parent) {
+  parent_ = parent->shared_from_this();
   type_table_ = std::make_unique<TypeTable>();
   symbol_table_ = std::make_unique<SymbolTable>();
 }
@@ -98,24 +98,24 @@ bool ControlTable::addFunction(const std::string &name,
 bool ControlTable::isVariable(const std::string &name) {
   if (symbol_table_->isVariable(name))
     return true;
-  if (parent_ != nullptr)
-    return parent_->isVariable(name);
+  if (!parent_.expired())
+    return parent_.lock()->isVariable(name);
   return false;
 }
 
 bool ControlTable::isFunction(const std::string &name) {
   if (symbol_table_->isFunction(name))
     return true;
-  if (parent_ != nullptr)
-    return parent_->isFunction(name);
+  if (!parent_.expired())
+    return parent_.lock()->isFunction(name);
   return false;
 }
 
 bool ControlTable::isType(const std::string &name) {
   if (type_table_->isType(name))
     return true;
-  if (parent_ != nullptr)
-    return parent_->isType(name);
+  if (!parent_.expired())
+    return parent_.lock()->isType(name);
   return false;
 }
 
@@ -151,8 +151,8 @@ ControlTable::getVariable(const std::string &name) {
   auto result = symbol_table_->getVariable(name);
   if (result != nullptr)
     return result;
-  if (parent_ != nullptr)
-    return parent_->getVariable(name);
+  if (!parent_.expired())
+    return parent_.lock()->getVariable(name);
   return nullptr;
 }
 
@@ -161,8 +161,8 @@ ControlTable::getFunction(const std::string &name) {
   auto result = symbol_table_->getFunction(name);
   if (result != nullptr)
     return result;
-  if (parent_ != nullptr)
-    return parent_->getFunction(name);
+  if (!parent_.expired())
+    return parent_.lock()->getFunction(name);
   return nullptr;
 }
 
@@ -170,7 +170,12 @@ std::shared_ptr<TypeNode> ControlTable::getType(const std::string &name) {
   auto result = type_table_->getType(name);
   if (result != nullptr)
     return result;
-  if (parent_ != nullptr)
-    return parent_->getType(name);
+  if (!parent_.expired())
+    return parent_.lock()->getType(name);
   return nullptr;
+}
+std::shared_ptr<ControlTable> ControlTable::getParent() const {
+  if (parent_.expired())
+    return nullptr;
+  return parent_.lock();
 }
