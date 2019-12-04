@@ -12,6 +12,8 @@ add_subdirectory(common)
 add_subdirectory(grammar)
 add_subdirectory(semantic_analyzer)
 
+configure_file(test.txt ${CMAKE_BINARY_DIR} COPYONLY)
+
 add_executable(ICompiler
         main.cpp
         )
