@@ -168,7 +168,7 @@ arguments
     ;
 
 expressions
-    : expressions COMMA expression { $$ = add_node("expressions", 0);  pick_up_children($$, $1); add_child($$, $2);}
+    : expressions COMMA expression { $$ = add_node("expressions", 0);  pick_up_children($$, $1); add_child($$, $3);}
     | expression { $$ = add_node("expressions", 1, $1);}
     ;
 
