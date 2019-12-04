@@ -1,0 +1,7 @@
+routine main() : integer is
+    var a is 4
+    while a < c loop
+        a := a + 1
+    end
+    return a
+end
