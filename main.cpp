@@ -1,6 +1,6 @@
 #include "common/Node.hpp"
-//#include "lexer/Lexer.hpp"
-//#include "grammar/Parser.hpp"
+#include "grammar/Parser.hpp"
+#include "lexer/Lexer.hpp"
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -18,6 +18,10 @@ void print_node(CNode *node, int margin) {
 void print_tree(CNode *root) { print_node(root, 0); }
 
 void changeChild(CNode *&src_node, CNode *res_node) {
+  for (CNode *child : src_node->children) {
+    if (res_node != child)
+      delete child;
+  }
   delete src_node;
   src_node = res_node;
 }
@@ -31,7 +35,82 @@ CNode *calculate(CNode *node) {
       changeChild(node->children[0], res_node);
 
     if (node->children.size() == 3) {
-      return node;
+      auto second_node = calculate(node->children[2]);
+      if (second_node != node->children[2])
+        changeChild(node->children[2], second_node);
+
+      if (!(res_node->name == "integer" || res_node->name == "boolean")) {
+        if (res_node->name == "real") {
+          std::cerr << "Real " << res_node->children[0]->name
+                    << " cannot be converted to boolean" << std::endl;
+          exit(1);
+        }
+        return node;
+      }
+
+      if (!(second_node->name == "integer" || second_node->name == "boolean")) {
+        if (second_node->name == "real") {
+          std::cerr << "Real " << second_node->children[0]->name
+                    << " cannot be converted to boolean" << std::endl;
+          exit(1);
+        }
+        return node;
+      }
+
+      bool real_l = false;
+      bool real_r = false;
+
+      std::string l = res_node->children[0]->name;
+      std::string r = second_node->children[0]->name;
+
+      if (l == "true") {
+        real_l = true;
+      } else if (res_node->name == "integer") {
+        int g = std::stoi(l);
+        if (g == 1)
+          real_l = true;
+        else if (g == 0)
+          real_l = false;
+        else {
+          std::cerr << "Cannot convert " << g << " to boolean" << std::endl;
+          exit(1);
+        }
+      }
+
+      if (r == "true") {
+        real_r = true;
+      } else if (second_node->name == "integer") {
+        int g = std::stoi(r);
+        if (g == 1)
+          real_r = true;
+        else if (g == 0)
+          real_r = false;
+        else {
+          std::cerr << "Cannot convert " << g << " to boolean" << std::endl;
+          exit(1);
+        }
+      }
+
+      std::string op = node->children[1]->name;
+      bool res;
+      if (op == "and") {
+        res = real_l && real_r;
+      } else if (op == "or") {
+        res = real_l || real_r;
+      } else if (op == "xor") {
+        res = (real_l || real_r) && !(real_l && real_r);
+      } else {
+        // ERROR
+        return node;
+      }
+
+      CNode *resultNode = new CNode("boolean");
+      if (res) {
+        resultNode->children.push_back(new CNode("true"));
+      } else {
+        resultNode->children.push_back(new CNode("false"));
+      }
+      return resultNode;
     }
     return node->children[0];
   } else if (node->name == "relation") {
@@ -40,7 +119,64 @@ CNode *calculate(CNode *node) {
     if (res_node != node->children[0])
       changeChild(node->children[0], res_node);
     if (node->children.size() == 3) {
-      return node;
+      auto second_node = calculate(node->children[2]);
+      if (second_node != node->children[2])
+        changeChild(node->children[2], second_node);
+
+      if (!(res_node->name == "integer" || res_node->name == "boolean" ||
+            res_node->name == "real")) {
+        return node;
+      }
+
+      if (!(second_node->name == "integer" || second_node->name == "boolean" ||
+            second_node->name == "real")) {
+        return node;
+      }
+
+      double real_l = 0;
+      double real_r = 0;
+
+      std::string l = res_node->children[0]->name;
+      std::string r = second_node->children[0]->name;
+
+      if (l == "true" or l == "false") {
+        real_l = l == "true";
+      } else {
+        real_l = std::stod(l);
+      }
+
+      if (r == "true" or r == "false") {
+        real_r = r == "true";
+      } else {
+        real_r = std::stod(r);
+      }
+
+      std::string op = node->children[1]->name;
+      bool res;
+      if (op == "<") {
+        res = real_l < real_r;
+      } else if (op == "<=") {
+        res = real_l <= real_r;
+      } else if (op == ">") {
+        res = real_l > real_r;
+      } else if (op == ">=") {
+        res = real_l >= real_r;
+      } else if (op == "=") {
+        res = real_l == real_r;
+      } else if (op == "/=") {
+        res = real_l != real_r;
+      } else {
+        // ERROR
+        exit(1);
+      }
+
+      CNode *resultNode = new CNode("boolean");
+      if (res) {
+        resultNode->children.push_back(new CNode("true"));
+      } else {
+        resultNode->children.push_back(new CNode("false"));
+      }
+      return resultNode;
     }
     return node->children[0];
 
@@ -53,6 +189,81 @@ CNode *calculate(CNode *node) {
       return node;
     }
     return node->children[0];
+  } else if (node->name == "not_factor") {
+    auto res = calculate(node->children[1]);
+    if (res != node->children[1])
+      changeChild(node->children[1], res);
+
+    if (res->name == "real") {
+      std::cerr << "Real " << res->children[0]->name
+                << " cannot be converted to boolean" << std::endl;
+      exit(1);
+    }
+
+    if (!(res->name == "integer" || res->name == "boolean")) {
+      return node;
+    }
+
+    bool real_a = false;
+
+    std::string a = res->children[0]->name;
+
+    if (a == "true") {
+      real_a = true;
+    } else if (res->name == "integer") {
+      int g = std::stoi(a);
+      if (g == 1)
+        real_a = true;
+      else if (g == 0)
+        real_a = false;
+      else {
+        std::cerr << "Cannot convert " << g << " to boolean" << std::endl;
+        exit(1);
+      }
+    }
+
+    real_a = !real_a;
+
+    CNode *resultNode = new CNode("boolean");
+    if (real_a) {
+      resultNode->children.push_back(new CNode("true"));
+    } else {
+      resultNode->children.push_back(new CNode("false"));
+    }
+    return resultNode;
+  } else if (node->name == "unary_factor") {
+    auto res = calculate(node->children[1]);
+    if (res != node->children[1])
+      changeChild(node->children[1], res);
+
+    if (res->name == "boolean") {
+      std::cerr << "Cannot use unary signs with Boolean: "
+                << res->children[0]->name << std::endl;
+      exit(1);
+    }
+
+    std::string op = node->children[0]->name;
+    std::string a = res->children[0]->name;
+    if (res->name == "integer") {
+      if (op == "+") {
+        return res;
+      }
+      int result = -std::stoi(a);
+      CNode *resultNode = new CNode("integer");
+      resultNode->children.push_back(new CNode(std::to_string(result)));
+      return resultNode;
+    } else if (res->name == "real") {
+      if (op == "+") {
+        return res;
+      }
+      double result = -std::stod(a);
+      CNode *resultNode = new CNode("real");
+      resultNode->children.push_back(new CNode(std::to_string(result)));
+      return resultNode;
+    } else {
+      return node;
+    }
+
   } else if (node->name == "factor") {
     res_node = calculate(node->children[0]);
     if (res_node != node->children[0])
@@ -65,22 +276,24 @@ CNode *calculate(CNode *node) {
   } else if (node->name == "summand") {
     return calculate(node->children[0]);
 
-  } else if (node->name == "integer") {
+  } else if (node->name == "integer" || node->name == "boolean" ||
+             node->name == "real" || node->name == "modifiable_primary" ||
+             node->name == "modifiable_primary_array" ||
+             node->name == "modifiable_primary_field") {
     return node;
   }
   return nullptr;
 }
 
 int main(int argc, char *argv[]) {
-  /*if (argc != 2) {
+  if (argc != 2) {
     std::cerr << "Invalid number of args" << std::endl;
     std::cerr << "Usage: " << argv[0] << " <path_to_source>" << std::endl;
     return 1;
   }
 
   std::ifstream src_file(argv[1]);
-  if (!src_file.is_open())
-  {
+  if (!src_file.is_open()) {
     std::cerr << "File don't open" << std::endl;
     return 1;
   }
@@ -88,66 +301,79 @@ int main(int argc, char *argv[]) {
 
   buffer << src_file.rdbuf();
   Lexer *lexer = new Lexer(buffer.str());
-  CNode* root = nullptr;
-  yy::parser parser(lexer, (void**)&root);
+  CNode *root = nullptr;
+  yy::parser parser(lexer, (void **)&root);
   parser.parse();
   if (root == nullptr)
     return 1;
 
-  print_tree(root);*/
-  std::cout << "work\n";
-  CNode *expression = new CNode("expression");
-  CNode *relation = new CNode("relation");
-  CNode *simple1 = new CNode("simple");
-  CNode *simple2 = new CNode("simple");
-  CNode *factor1 = new CNode("factor");
-  CNode *summand1 = new CNode("summand");
-  CNode *integer1 = new CNode("integer");
-  CNode *number1 = new CNode("20");
-
-  CNode *mul = new CNode("*");
-  CNode *factor2 = new CNode("factor");
-  CNode *summand2 = new CNode("summand");
-  CNode *integer2 = new CNode("integer");
-  CNode *number2 = new CNode("8");
-
-  CNode *less = new CNode("<");
-  CNode *simple3 = new CNode("simple");
-  CNode *factor3 = new CNode("factor");
-  CNode *summand3 = new CNode("summand");
-  CNode *integer3 = new CNode("integer");
-  CNode *number3 = new CNode("10");
-
-  expression->children.push_back(relation);
-
-  relation->children.push_back(simple1);
-  relation->children.push_back(less);
-  relation->children.push_back(simple2);
-
-  simple1->children.push_back(simple3);
-  simple1->children.push_back(mul);
-  simple1->children.push_back(factor1);
-
-  simple3->children.push_back(factor3);
-  factor3->children.push_back(summand3);
-  summand3->children.push_back(integer3);
-  integer3->children.push_back(number3);
-
-  factor1->children.push_back(summand1);
-  summand1->children.push_back(integer1);
-  integer1->children.push_back(number1);
-
-  simple2->children.push_back(factor2);
-  factor2->children.push_back(summand2);
-  summand2->children.push_back(integer2);
-  integer2->children.push_back(number2);
-
-  CNode *res = calculate(simple1);
+  print_tree(root);
+  auto ex =
+      root->children[0]->children[3]->children[0]->children[0]->children[0];
+  std::cout << ex->name << "\n";
+  CNode *res = calculate(ex->children[0]);
+  if (res != ex->children[0])
+    changeChild(ex->children[0], res);
   if (res == nullptr) {
     std::cout << "KEK\n";
   }
   std::cout << res->name << "\n";
   std::cout << res->children[0]->name << "\n";
+  print_tree(root);
+
+  //  std::cout << "work\n";
+  //  CNode *expression = new CNode("expression");
+  //  CNode *relation = new CNode("relation");
+  //  CNode *simple1 = new CNode("simple");
+  //  CNode *simple2 = new CNode("simple");
+  //  CNode *factor1 = new CNode("factor");
+  //  CNode *summand1 = new CNode("summand");
+  //  CNode *integer1 = new CNode("integer");
+  //  CNode *number1 = new CNode("20");
+  //
+  //  CNode *mul = new CNode("*");
+  //  CNode *factor2 = new CNode("factor");
+  //  CNode *summand2 = new CNode("summand");
+  //  CNode *integer2 = new CNode("integer");
+  //  CNode *number2 = new CNode("8");
+  //
+  //  CNode *less = new CNode("<");
+  //  CNode *simple3 = new CNode("simple");
+  //  CNode *factor3 = new CNode("factor");
+  //  CNode *summand3 = new CNode("summand");
+  //  CNode *integer3 = new CNode("integer");
+  //  CNode *number3 = new CNode("10");
+  //
+  //  expression->children.push_back(relation);
+  //
+  //  relation->children.push_back(simple1);
+  //  relation->children.push_back(less);
+  //  relation->children.push_back(simple2);
+  //
+  //  simple1->children.push_back(simple3);
+  //  simple1->children.push_back(mul);
+  //  simple1->children.push_back(factor1);
+  //
+  //  simple3->children.push_back(factor3);
+  //  factor3->children.push_back(summand3);
+  //  summand3->children.push_back(integer3);
+  //  integer3->children.push_back(number3);
+  //
+  //  factor1->children.push_back(summand1);
+  //  summand1->children.push_back(integer1);
+  //  integer1->children.push_back(number1);
+  //
+  //  simple2->children.push_back(factor2);
+  //  factor2->children.push_back(summand2);
+  //  summand2->children.push_back(integer2);
+  //  integer2->children.push_back(number2);
+  //
+  //  CNode *res = calculate(simple1);
+  //  if (res == nullptr) {
+  //    std::cout << "KEK\n";
+  //  }
+  //  std::cout << res->name << "\n";
+  //  std::cout << res->children[0]->name << "\n";
 
   return 0;
 }
