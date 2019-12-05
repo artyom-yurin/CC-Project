@@ -334,7 +334,67 @@ CNode *calculate(CNode *node) {
       changeChild(node->children[0], res_node);
 
     if (node->children.size() == 3) {
-      return node;
+      auto second_node = calculate(node->children[2]);
+      if (second_node != node->children[2])
+        changeChild(node->children[2], second_node);
+
+      if (!(res_node->name == "integer" || res_node->name == "real")) {
+        if (res_node->name == "boolean") {
+          std::cerr << "Cannot use arithmetic operations with boolean"
+                    << std::endl;
+          exit(1);
+        }
+        return node;
+      }
+
+      if (!(second_node->name == "integer" || second_node->name == "real")) {
+        if (second_node->name == "boolean") {
+          std::cerr << "Cannot use arithmetic operations with boolean"
+                    << std::endl;
+          exit(1);
+        }
+        return node;
+      }
+
+      if (res_node->name == "integer" && second_node->name == "integer")
+      {
+        int real_l = toInteger(res_node);
+        int real_r = toInteger(second_node);
+
+        std::string op = node->children[1]->name;
+        int res;
+        if (op == "+") {
+          res = real_l + real_r;
+        } else if (op == "-") {
+          res = real_l - real_r;
+        } else {
+          // ERROR
+          exit(1);
+        }
+
+        CNode *resultNode = new CNode("integer");
+        resultNode->children.push_back(new CNode(std::to_string(res)));
+        return resultNode;
+      }
+      else {
+        double real_l = toReal(res_node);
+        double real_r = toReal(second_node);
+
+        std::string op = node->children[1]->name;
+        double res;
+        if (op == "+") {
+          res = real_l + real_r;
+        } else if (op == "-") {
+          res = real_l - real_r;
+        } else {
+          // ERROR
+          exit(1);
+        }
+
+        CNode *resultNode = new CNode("real");
+        resultNode->children.push_back(new CNode(std::to_string(res)));
+        return resultNode;
+      }
     }
     return node->children[0];
   } else if (node->name == "summand") {
