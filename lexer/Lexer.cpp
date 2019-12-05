@@ -84,7 +84,7 @@ void Lexer::createSymbolTable() {
 bool Lexer::isDigit(char c) { return c >= '0' && c <= '9'; }
 
 bool Lexer::isLetter(char c) {
-  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_');
 }
 
 bool Lexer::isOtherSymbol(char c) {
@@ -154,74 +154,81 @@ Token Lexer::parseOtherSymbol() {
   Token token = Token(-1, "");
 
   if (*src_iter == '+') {
-    token.value = "+";
-    token.class_name = parser::token::yytokentype::PLUS_SIGN;
+      token.value = "+";
+      token.class_name = parser::token::yytokentype::PLUS_SIGN;
   } else if (*src_iter == '-') {
-    token.value = "-";
-    token.class_name = parser::token::yytokentype::MINUS_SIGN;
+      token.value = "-";
+      token.class_name = parser::token::yytokentype::MINUS_SIGN;
   } else if (*src_iter == '*') {
-    token.value = "*";
-    token.class_name = parser::token::yytokentype::MULT_SIGN;
+      token.value = "*";
+      token.class_name = parser::token::yytokentype::MULT_SIGN;
   } else if (*src_iter == '/') {
-    if (*(src_iter + 1) == '=' && (src_iter + 1 != src.end())) {
-      token.value = "/=";
-      token.class_name = parser::token::yytokentype::NEQ_SIGN;
-    } else {
-      token.value = "/";
-      token.class_name = parser::token::yytokentype::DIV_SIGN;
-    }
+      if (*(src_iter + 1) == '=' && (src_iter + 1 != src.end())) {
+          src_iter++;
+          token.value = "/=";
+          token.class_name = parser::token::yytokentype::NEQ_SIGN;
+      } else {
+          token.value = "/";
+          token.class_name = parser::token::yytokentype::DIV_SIGN;
+      }
   } else if (*src_iter == '%') {
-    token.value = "%";
-    token.class_name = parser::token::yytokentype::MOD_SIGN;
+      token.value = "%";
+      token.class_name = parser::token::yytokentype::MOD_SIGN;
   } else if (*src_iter == '=') {
-    token.value = '=';
-    token.class_name = parser::token::yytokentype::EQ_SIGN;
+      token.value = '=';
+      token.class_name = parser::token::yytokentype::EQ_SIGN;
   } else if (*src_iter == '<') {
-    if (src_iter + 1 != src.end() && *(src_iter + 1) == '=') {
-      src_iter++;
-      token.value = "<=";
-      token.class_name = parser::token::yytokentype::LET_SIGN;
-    } else {
-      token.value = "<";
-      token.class_name = parser::token::yytokentype::LT_SIGN;
-    }
+      if (src_iter + 1 != src.end() && *(src_iter + 1) == '=') {
+          src_iter++;
+          token.value = "<=";
+          token.class_name = parser::token::yytokentype::LET_SIGN;
+      } else {
+          token.value = "<";
+          token.class_name = parser::token::yytokentype::LT_SIGN;
+      }
   } else if (*src_iter == '>') {
-    if (src_iter + 1 != src.end() && *(src_iter + 1) == '=') {
-      src_iter++;
-      token.value = ">=";
-      token.class_name = parser::token::yytokentype::GET_SIGN;
-    } else {
-      token.value = ">";
-      token.class_name = parser::token::yytokentype::GT_SIGN;
-    }
+      if (src_iter + 1 != src.end() && *(src_iter + 1) == '=') {
+          src_iter++;
+          token.value = ">=";
+          token.class_name = parser::token::yytokentype::GET_SIGN;
+      } else {
+          token.value = ">";
+          token.class_name = parser::token::yytokentype::GT_SIGN;
+      }
   } else if (*src_iter == '[') {
-    token.value = "[";
-    token.class_name = parser::token::yytokentype::L_SQ_BR;
+      token.value = "[";
+      token.class_name = parser::token::yytokentype::L_SQ_BR;
   } else if (*src_iter == '(') {
-    token.value = "(";
-    token.class_name = parser::token::yytokentype::L_BR;
+      token.value = "(";
+      token.class_name = parser::token::yytokentype::L_BR;
   } else if (*src_iter == ']') {
-    token.value = "]";
-    token.class_name = parser::token::yytokentype::R_SQ_BR;
+      token.value = "]";
+      token.class_name = parser::token::yytokentype::R_SQ_BR;
   } else if (*src_iter == ')') {
-    token.value = ")";
-    token.class_name = parser::token::yytokentype::R_BR;
+      token.value = ")";
+      token.class_name = parser::token::yytokentype::R_BR;
   } else if (*src_iter == ':') {
-    if (src_iter + 1 != src.end() && *(src_iter + 1) == '=') {
-      src_iter++;
-      token.value = ":=";
-      token.class_name = parser::token::yytokentype::ASSIGNMENT_SIGN;
-    } else {
-      token.value = ":";
-      token.class_name = parser::token::yytokentype::COLON;
-    }
+      if (src_iter + 1 != src.end() && *(src_iter + 1) == '=') {
+          src_iter++;
+          token.value = ":=";
+          token.class_name = parser::token::yytokentype::ASSIGNMENT_SIGN;
+      } else {
+          token.value = ":";
+          token.class_name = parser::token::yytokentype::COLON;
+      }
   } else if (*src_iter == ',') {
-    token.value = ",";
-    token.class_name = parser::token::yytokentype::COMMA;
+      token.value = ",";
+      token.class_name = parser::token::yytokentype::COMMA;
   } else if (*src_iter == '.') {
-    token.value = ".";
-    token.class_name = parser::token::yytokentype::DOT;
-  }
+      if (src_iter + 1 != src.end() && *(src_iter + 1) == '.') {
+          src_iter++;
+          token.value = "..";
+          token.class_name = parser::token::yytokentype::RANGE_SIGN;
+      } else {
+          token.value = ".";
+          token.class_name = parser::token::yytokentype::DOT;
+      }
+  } 
   src_iter++;
   return token;
 }

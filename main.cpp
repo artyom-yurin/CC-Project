@@ -1,15 +1,15 @@
 #include "common/Node.hpp"
 #include "grammar/Parser.hpp"
 #include "lexer/Lexer.hpp"
+#include "semantic_analyzer/expressions/expressionProcessing.hpp"
 #include <assert.h>
 #include <fstream>
 #include <iostream>
 #include <semantic_analyzer/ControlTable.hpp>
 #include <sstream>
 
-void print_node(CNode *node, int margin) {
-  if (node == nullptr)
-    return;
+void print_node(CNode* node, int margin) {
+  if (node == nullptr) return;
   for (int i = 0; i < margin; i++)
     std::cout << "   ";
   std::cout << "<" << node->name << ">\n";
@@ -112,7 +112,8 @@ int main(int argc, char *argv[]) {
   }
 
   std::ifstream src_file(argv[1]);
-  if (!src_file.is_open()) {
+  if (!src_file.is_open())
+  {
     std::cerr << "File don't open" << std::endl;
     return 1;
   }
@@ -120,8 +121,8 @@ int main(int argc, char *argv[]) {
 
   buffer << src_file.rdbuf();
   Lexer *lexer = new Lexer(buffer.str());
-  CNode *root = nullptr;
-  yy::parser parser(lexer, (void **)&root);
+  CNode* root = nullptr;
+  yy::parser parser(lexer, (void**)&root);
   parser.parse();
   if (root == nullptr)
     return 1;

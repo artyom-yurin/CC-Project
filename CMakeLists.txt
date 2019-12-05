@@ -12,6 +12,8 @@ add_subdirectory(common)
 add_subdirectory(grammar)
 add_subdirectory(semantic_analyzer)
 
+configure_file(test.txt ${CMAKE_BINARY_DIR} COPYONLY)
+
 add_executable(ICompiler
         main.cpp
         )
@@ -20,4 +22,5 @@ target_link_libraries(ICompiler
         Parser
         Lexer
         ControlTable
+        Expressions
         )
