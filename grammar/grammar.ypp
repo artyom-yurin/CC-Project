@@ -61,18 +61,18 @@ program
     ;
 
 simple_declaration
-    : variable_declarartion { $$ = add_node("simple_declarartion", 1, $1); }
+    : variable_declaration { $$ = add_node("simple_declaration", 1, $1); }
     | type_declaration { $$ = add_node("simple_declaration", 1, $1); }
     ;
 
-variable_declarartion
-    : VAR IDENTIFIER COLON type variable_expression { $$ = add_node("variable_declarartion", 3, $2, $4, $5);}
-    | VAR IDENTIFIER IS expression { $$ = add_node("variable_declarartion_auto", 2, $2, $4);}
+variable_declaration
+    : VAR IDENTIFIER COLON type variable_expression { $$ = add_node("variable_declaration", 3, $2, $4, $5);}
+    | VAR IDENTIFIER IS expression { $$ = add_node("variable_declaration_auto", 2, $2, $4);}
     ;
 
 variable_expression
     : {$$ = nullptr;}
-    | IS expression { $$ = add_node("variable_expression", 1, $2);}
+    | IS expression { $$ = $2;}
     ;
 
 type_declaration
@@ -85,12 +85,12 @@ routine_declaration
 
 routine_return_type
     : {$$ = nullptr;}
-    | COLON type { $$ = add_node("routine_return_type", 1, $2);}
+    | COLON type { $$ = $2;}
     ;
 
 routine_parameters
     : {$$ = nullptr;}
-    | parameters { $$ = add_node("routine_parameters", 1, $1);}
+    | parameters { $$ = $1;}
     ;
 
 parameters
@@ -118,11 +118,11 @@ primitive_type
     ;
 
 record_type
-    : RECORD variables_declarartion END { $$ = add_node("record_type", 1, $2);}
+    : RECORD variables_declaration END { $$ = add_node("record_type", 1, $2);}
     ;
 
-variables_declarartion
-    : variable_declarartion variables_declarartion { $$ = add_node("variables_declarartion", 1, $1); pick_up_children($$, $2);}
+variables_declaration
+    : variable_declaration variables_declaration { $$ = add_node("variables_declaration", 1, $1); pick_up_children($$, $2);}
     | {$$ = nullptr;}
     ;
 
@@ -164,12 +164,12 @@ routine_call
 
 arguments
     : {$$ = nullptr;}
-    | expressions { $$ = add_node("arguments", 1, $1);}
+    | expressions { $$ = $1;}
     ;
 
 expressions
-    : expressions COMMA expression { $$ = add_node("expressions", 0);  pick_up_children($$, $1); add_child($$, $3);}
-    | expression { $$ = add_node("expressions", 1, $1);}
+    : expressions COMMA expression { $$ = add_node("arguments", 0);  pick_up_children($$, $1); add_child($$, $3);}
+    | expression { $$ = add_node("arguments", 1, $1);}
     ;
 
 while_loop

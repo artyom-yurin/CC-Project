@@ -5,21 +5,20 @@
 #include "semantic_analyzer/type_table/TypeTable.hpp"
 #include <memory>
 
-class ControlTable {
+class ControlTable : public std::enable_shared_from_this<ControlTable> {
 public:
   ControlTable();
-  ControlTable(ControlTable* parent);
+  ControlTable(ControlTable *parent);
   ~ControlTable() = default;
 
-  bool addSimpleType(const std::string &name,
-                     const std::string originalTypeName);
-  bool addArrayType(const std::string &name, const std::string &originalName,
-                    CNode *expression);
-  bool addRecordType(const std::string &name, CNode *fields);
+  bool addType(const std::string &name,
+                     CNode* type);
 
-  bool addVariable(const std::string &name, const std::string &type,
+  bool addVariable(const std::string name, CNode *type,
                    CNode *expression);
-  bool addFunction(const std::string &name, const std::string &return_type,
+  bool addAutoVariable(const std::string &name, CNode *expression);
+  bool addCounter(const std::string &name);
+  bool addFunction(const std::string &name, CNode *return_type,
                    CNode *parameters);
 
   bool isVariable(const std::string &name);
@@ -39,12 +38,36 @@ public:
   // return key
   std::string addSubScope();
 
+  std::shared_ptr<ControlTable> getParent() const;
+
+  bool check_modifiable(CNode *node);
+  bool processingExpression(CNode* &parent, int idChild);
+
+  bool checkFunctionCall(const std::string& functionName, CNode* arguments);
 private:
-    std::shared_ptr<FunctionNode> getFunction(const std::string &name);
-    std::shared_ptr<VariableNode> getVariable(const std::string &name);
+  std::shared_ptr<FunctionNode> getFunction(const std::string &name);
+  std::shared_ptr<VariableNode> getVariable(const std::string &name);
   std::shared_ptr<TypeNode> getType(const std::string &name);
 
-  ControlTable* parent_;
+  bool check_modifiable(CNode *node, std::shared_ptr<TypeNode> &currentType);
+
+  bool CNode2FieldList(CNode *fields,
+                       std::vector<std::shared_ptr<VariableNode>> &fields_list);
+
+  bool CNode2ArgList(CNode *args,
+                       std::vector<std::shared_ptr<VariableNode>> &args_list);
+
+  std::shared_ptr<TypeNode> CNode2TypeNode(CNode *type);
+
+  bool addType(const std::string &name,
+               std::shared_ptr<TypeNode> type);
+
+  bool addVariable(const std::string &name, std::shared_ptr<TypeNode> type,
+                   CNode *expression);
+
+  CNode * calculate(CNode *node);
+
+  std::weak_ptr<ControlTable> parent_;
   std::unique_ptr<TypeTable> type_table_;
   std::unique_ptr<SymbolTable> symbol_table_;
   std::unordered_map<std::string, std::shared_ptr<ControlTable>> sub_scopes_;

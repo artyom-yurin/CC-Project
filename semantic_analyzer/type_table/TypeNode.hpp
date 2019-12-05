@@ -8,6 +8,7 @@ class VariableNode;
 
 enum Types {
   Auto,
+  NoType,
   Simple,
   Array,
   Record
@@ -20,6 +21,14 @@ public:
   virtual std::string toStr() const = 0;
 protected:
   Types type;
+};
+
+class NoTypeNode : public TypeNode{
+public:
+  NoTypeNode();
+  ~NoTypeNode() = default;
+
+  std::string toStr() const override ;
 };
 
 class AutoType : public TypeNode{
