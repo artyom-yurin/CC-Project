@@ -22,5 +22,4 @@ target_link_libraries(ICompiler
         Parser
         Lexer
         ControlTable
-        Expressions
         )

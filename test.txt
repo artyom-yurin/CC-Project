@@ -1,12 +1,7 @@
-routine main(x: integer, y: boolean) : integer is
-    return not x
-end
 routine some(m: boolean) : integer is
-    var a : array [9] record
-            var i: array [10] integer
-            var b: record
-                        var x:integer
-                    end
-           end
-
+    for i in 1 .. 10 loop
+        var a: boolean
+        var b: integer
+        a := b
+    end
 end

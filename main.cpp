@@ -1,7 +1,6 @@
 #include "common/Node.hpp"
 #include "grammar/Parser.hpp"
 #include "lexer/Lexer.hpp"
-#include "semantic_analyzer/expressions/expressionProcessing.hpp"
 #include <assert.h>
 #include <fstream>
 #include <iostream>
@@ -68,7 +67,9 @@ bool check_expression(CNode *node) {
     return true;
   } else if (node->name == "summand") {
     return check_expression(node->children[0]);
-  } else if (node->name == "modifiable_primary_array" || node->name == "modifiable_primary_field" || node->name == "modifiable_primary") {
+  } else if (node->name == "modifiable_primary_array" ||
+             node->name == "modifiable_primary_field" ||
+             node->name == "modifiable_primary") {
     return currentTable->check_modifiable(node);
   } else if (node->name == "integer" || node->name == "boolean" ||
              node->name == "real") {
@@ -82,15 +83,15 @@ bool check_statements(CNode *node) {
   if (statement->name == "return") {
     // first processing
     auto ret_value = statement->children[0];
-    if (!processingExpression(ret_value, 0)) {
+    if (!currentTable->processingExpression(ret_value, 0)) {
       return false;
     }
     return check_expression(ret_value->children[0]);
   } else if (statement->name == "assignment") {
-    if (!currentTable->check_modifiable(statement->children[0])){
+    if (!currentTable->check_modifiable(statement->children[0])) {
       return false;
     }
-    return processingExpression(statement, 1);
+    return currentTable->processingExpression(statement, 1);
   } else if (statement->name == "routine_call") {
     std::string functionName = statement->children[0]->name;
     return currentTable->checkFunctionCall(functionName,
@@ -98,32 +99,56 @@ bool check_statements(CNode *node) {
   } else if (statement->name == "while_loop") {
     return true; // TODO: implement
   } else if (statement->name == "for_loop") {
-    return true; // TODO: implement
-  } else if (statement->name == "if_statement") {
-    if(!processingExpression(statement, 0)){
+    CNode *range = statement->children[1];
+    std::vector<CNode *> new_range = {};
+    if (range->children[0] != nullptr) {
+      new_range.push_back(range->children[1]);
+      new_range.push_back(range->children[2]);
+    } else {
+      new_range.push_back(range->children[2]);
+      new_range.push_back(range->children[1]);
+      delete range->children[0];
+    }
+    range->children = new_range;
+    if (!currentTable->processingExpression(range, 0) || !currentTable->processingExpression(range, 1)) {
       return false;
     }
     std::string key = currentTable->addSubScope();
-    if (key.empty())
-    {
+    if (key.empty()) {
       return false;
     }
     currentTable = currentTable->getSubScopeTable(key);
-    if (!check_reachable(statement->children[1])){
+
+    if (!currentTable->addCounter(statement->children[0]->name)) {
+      return false;
+    }
+    if (!check_reachable(statement->children[2])) {
       return false;
     }
     currentTable = currentTable->getParent();
-    if (statement->children[2] == nullptr)
-    {
-      return true;
+    return true;
+  } else if (statement->name == "if_statement") {
+    if (!currentTable->processingExpression(statement, 0)) {
+      return false;
     }
-    key = currentTable->addSubScope();
-    if (key.empty())
-    {
+    std::string key = currentTable->addSubScope();
+    if (key.empty()) {
       return false;
     }
     currentTable = currentTable->getSubScopeTable(key);
-    if (!check_reachable(statement->children[2]->children[0])){
+    if (!check_reachable(statement->children[1])) {
+      return false;
+    }
+    currentTable = currentTable->getParent();
+    if (statement->children[2] == nullptr) {
+      return true;
+    }
+    key = currentTable->addSubScope();
+    if (key.empty()) {
+      return false;
+    }
+    currentTable = currentTable->getSubScopeTable(key);
+    if (!check_reachable(statement->children[2]->children[0])) {
       return false;
     }
     currentTable = currentTable->getParent();

@@ -1,6 +1,5 @@
 add_subdirectory("symbol_table")
 add_subdirectory("type_table")
-add_subdirectory("expressions")
 
 add_library(ControlTable
         ControlTable.cpp
