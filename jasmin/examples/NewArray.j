@@ -21,17 +21,11 @@
    .limit stack 4
    .limit locals 2
 
-   ; create an array like:
-   ;
-   ;     boolean b[] = new boolean[2]
-   ;
-   ; (stores it in local var 1)
 
    iconst_2
    newarray boolean
    astore_1
 
-   ; b[0] = true;
    aload_1
    iconst_0
    iconst_1
