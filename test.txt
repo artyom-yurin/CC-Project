@@ -1,5 +1,5 @@
 routine some(m: boolean) : integer is
-    for i in 1 .. 10 loop
+    while true loop
         var a: boolean
         var b: integer
         a := b

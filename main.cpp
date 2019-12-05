@@ -97,7 +97,20 @@ bool check_statements(CNode *node) {
     return currentTable->checkFunctionCall(functionName,
                                            statement->children[1]);
   } else if (statement->name == "while_loop") {
-    return true; // TODO: implement
+    if (!currentTable->processingExpression(statement, 0)) {
+      return false;
+    }
+    std::string key = currentTable->addSubScope();
+    if (key.empty()) {
+      return false;
+    }
+    currentTable = currentTable->getSubScopeTable(key);
+
+    if (!check_reachable(statement->children[1])) {
+      return false;
+    }
+    currentTable = currentTable->getParent();
+    return true;
   } else if (statement->name == "for_loop") {
     CNode *range = statement->children[1];
     std::vector<CNode *> new_range = {};
@@ -110,7 +123,8 @@ bool check_statements(CNode *node) {
       delete range->children[0];
     }
     range->children = new_range;
-    if (!currentTable->processingExpression(range, 0) || !currentTable->processingExpression(range, 1)) {
+    if (!currentTable->processingExpression(range, 0) ||
+        !currentTable->processingExpression(range, 1)) {
       return false;
     }
     std::string key = currentTable->addSubScope();
