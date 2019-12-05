@@ -39,11 +39,15 @@ public:
 
   std::shared_ptr<ControlTable> getParent() const;
 
+  bool check_modifiable(CNode *node);
+
   bool checkFunctionCall(const std::string& functionName, CNode* arguments);
 private:
   std::shared_ptr<FunctionNode> getFunction(const std::string &name);
   std::shared_ptr<VariableNode> getVariable(const std::string &name);
   std::shared_ptr<TypeNode> getType(const std::string &name);
+
+  bool check_modifiable(CNode *node, std::shared_ptr<TypeNode> &currentType);
 
   bool CNode2FieldList(CNode *fields,
                        std::vector<std::shared_ptr<VariableNode>> &fields_list);

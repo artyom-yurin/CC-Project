@@ -1,5 +1,7 @@
 #include "semantic_analyzer/ControlTable.hpp"
+#include <algorithm>
 #include <unordered_set>
+#include "semantic_analyzer/expressions/expressionProcessing.hpp"
 
 ControlTable::ControlTable() {
   parent_.reset();
@@ -249,7 +251,7 @@ bool ControlTable::checkFunctionCall(const std::string &functionName,
   auto param = function->parameters_;
   if (param.size() == 0 and arguments == nullptr)
     return true;
-  else if (param.size() == arguments->children.size()) {
+  else if (arguments != nullptr && param.size() == arguments->children.size()) {
 
     std::vector<std::shared_ptr<VariableNode>> arg_list = {};
     if (!CNode2ArgList(arguments, arg_list)) {
@@ -260,8 +262,60 @@ bool ControlTable::checkFunctionCall(const std::string &functionName,
   }
   return false;
 }
+
 bool ControlTable::CNode2ArgList(
     CNode *args, std::vector<std::shared_ptr<VariableNode>> &args_list) {
   // TODO After calculate expression
   return true;
+}
+
+bool ControlTable::check_modifiable(CNode *node) {
+  std::shared_ptr<TypeNode> currentType = nullptr;
+  return check_modifiable(node, currentType);
+}
+bool ControlTable::check_modifiable(CNode *node,
+                                    std::shared_ptr<TypeNode> &currentType) {
+  if (node->name == "modifiable_primary") {
+    if (currentType == nullptr) {
+      auto var = getVariable(node->children[0]->name);
+      if (var == nullptr) {
+        return false;
+      }
+      currentType = var->variable_type_;
+      return true;
+    } else if (currentType->getType() == Types::Record) {
+      auto fields = std::dynamic_pointer_cast<RecordType>(currentType)->fields;
+      auto field =
+          std::find_if(fields.begin(), fields.end(),
+                       [=](const std::shared_ptr<VariableNode> &field) {
+                         return field->variable_name_ ==
+                                node->children[0]->name;
+                       });
+      if (field == fields.end()) {
+        return false;
+      }
+      currentType = (*field)->variable_type_;
+      return true;
+    }
+  } else if (node->name == "modifiable_primary_array") {
+    if (!check_modifiable(node->children[0], currentType)) {
+      return false;
+    }
+    if (currentType->getType() != Types::Array) {
+      return false;
+    }
+    currentType = std::dynamic_pointer_cast<ArrayType>(currentType)->arrayType;
+    return processingExpression(node, 1);
+  } else if (node->name == "modifiable_primary_field") {
+    if (!check_modifiable(node->children[0], currentType)) {
+        return false;
+    }
+
+    if (currentType->getType() != Types::Record) {
+        return false;
+    }
+
+    return check_modifiable(node->children[1], currentType);
+  }
+  return false;
 }
