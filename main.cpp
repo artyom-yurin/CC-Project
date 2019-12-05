@@ -26,6 +26,59 @@ void changeChild(CNode *&src_node, CNode *res_node) {
   src_node = res_node;
 }
 
+int toInteger(const CNode *node) {
+  if (node->name == "integer") {
+    return std::stoi(node->children[0]->name);
+  } else if (node->name == "real") {
+    double d = std::stod(node->children[0]->name);
+    int i = (int)d;
+    if ((i + 0.5) <= d)
+      i++;
+    return i;
+  } else if (node->name == "boolean") {
+    if (node->children[0]->name == "true") {
+      return 1;
+    }
+    return 0;
+  }
+  std::cerr << "Unknown type of CNode" << std::endl;
+  std::exit(1);
+}
+
+bool toBoolean(const CNode *node) {
+  if (node->name == "integer") {
+    int g = std::stoi(node->children[0]->name);
+    if (g == 1)
+      return true;
+    else if (g == 0)
+      return false;
+    else {
+      std::cerr << "Cannot convert " << g << " to boolean" << std::endl;
+      exit(1);
+    }
+  } else if (node->name == "real") {
+    std::cerr << "Real " << node->children[0]->name
+              << " cannot be converted to boolean" << std::endl;
+    exit(1);
+  } else if (node->name == "boolean") {
+    return node->children[0]->name == "true";
+  }
+  std::cerr << "Unknown type of CNode" << std::endl;
+  std::exit(1);
+}
+
+double toReal(const CNode *node) {
+  if (node->name == "integer") {
+    return std::stod(node->children[0]->name);
+  } else if (node->name == "real") {
+    return std::stod(node->children[0]->name);
+  } else if (node->name == "boolean") {
+    return node->children[0]->name == "true";
+  }
+  std::cerr << "Unknown type of CNode" << std::endl;
+  std::exit(1);
+}
+
 CNode *calculate(CNode *node) {
   CNode *res_node = nullptr;
   if (node->name == "expression") {
@@ -57,39 +110,8 @@ CNode *calculate(CNode *node) {
         return node;
       }
 
-      bool real_l = false;
-      bool real_r = false;
-
-      std::string l = res_node->children[0]->name;
-      std::string r = second_node->children[0]->name;
-
-      if (l == "true") {
-        real_l = true;
-      } else if (res_node->name == "integer") {
-        int g = std::stoi(l);
-        if (g == 1)
-          real_l = true;
-        else if (g == 0)
-          real_l = false;
-        else {
-          std::cerr << "Cannot convert " << g << " to boolean" << std::endl;
-          exit(1);
-        }
-      }
-
-      if (r == "true") {
-        real_r = true;
-      } else if (second_node->name == "integer") {
-        int g = std::stoi(r);
-        if (g == 1)
-          real_r = true;
-        else if (g == 0)
-          real_r = false;
-        else {
-          std::cerr << "Cannot convert " << g << " to boolean" << std::endl;
-          exit(1);
-        }
-      }
+      bool real_l = toBoolean(res_node);
+      bool real_r = toBoolean(second_node);
 
       std::string op = node->children[1]->name;
       bool res;
@@ -123,33 +145,24 @@ CNode *calculate(CNode *node) {
       if (second_node != node->children[2])
         changeChild(node->children[2], second_node);
 
-      if (!(res_node->name == "integer" || res_node->name == "boolean" ||
-            res_node->name == "real")) {
+      if (!(res_node->name == "integer" || res_node->name == "real")) {
+        if (res_node->name == "boolean") {
+          std::cerr << "Cannot use comparing with boolean" << std::endl;
+          exit(1);
+        }
         return node;
       }
 
-      if (!(second_node->name == "integer" || second_node->name == "boolean" ||
-            second_node->name == "real")) {
+      if (!(second_node->name == "integer" || second_node->name == "real")) {
+        if (second_node->name == "boolean") {
+          std::cerr << "Cannot use comparing with boolean" << std::endl;
+          exit(1);
+        }
         return node;
       }
 
-      double real_l = 0;
-      double real_r = 0;
-
-      std::string l = res_node->children[0]->name;
-      std::string r = second_node->children[0]->name;
-
-      if (l == "true" or l == "false") {
-        real_l = l == "true";
-      } else {
-        real_l = std::stod(l);
-      }
-
-      if (r == "true" or r == "false") {
-        real_r = r == "true";
-      } else {
-        real_r = std::stod(r);
-      }
+      double real_l = toReal(res_node);
+      double real_r = toReal(second_node);
 
       std::string op = node->children[1]->name;
       bool res;
@@ -186,7 +199,74 @@ CNode *calculate(CNode *node) {
     if (res_node != node->children[0])
       changeChild(node->children[0], res_node);
     if (node->children.size() == 3) {
-      return node;
+      auto second_node = calculate(node->children[2]);
+      if (second_node != node->children[2])
+        changeChild(node->children[2], second_node);
+
+      if (!(res_node->name == "integer" || res_node->name == "real")) {
+        if (res_node->name == "boolean") {
+          std::cerr << "Cannot use arithmetic operations with boolean"
+                    << std::endl;
+          exit(1);
+        }
+        return node;
+      }
+
+      if (!(second_node->name == "integer" || second_node->name == "real")) {
+        if (second_node->name == "boolean") {
+          std::cerr << "Cannot use arithmetic operations with boolean"
+                    << std::endl;
+          exit(1);
+        }
+        return node;
+      }
+
+      std::string op = node->children[1]->name;
+      if (res_node->name == "integer" && second_node->name == "integer") {
+        int l = toInteger(res_node);
+        int r = toInteger(second_node);
+        int res = 0;
+        if (op == "/") {
+          if (r == 0) {
+            std::cerr << "Сannot be divided by zero" << std::endl;
+            exit(1);
+          }
+          res = l / r;
+        } else if (op == "*") {
+          res = l * r;
+        } else if (op == "%") {
+          if (r == 0) {
+            std::cerr << "Сannot be divided by zero" << std::endl;
+            exit(1);
+          }
+          res = l % r;
+        }
+
+        CNode *resultNode = new CNode("integer");
+        resultNode->children.push_back(new CNode(std::to_string(res)));
+        return resultNode;
+      } else {
+        double l = toReal(res_node);
+        double r = toReal(second_node);
+
+        double res = 0;
+        if (op == "/") {
+          if (r == 0) {
+            std::cerr << "Сannot be divided by zero" << std::endl;
+            exit(1);
+          }
+          res = l / r;
+        } else if (op == "*") {
+          res = l * r;
+        } else if (op == "%") {
+          std::cerr << "Not mod operation for real numbers" << std::endl;
+          exit(1);
+        }
+
+        CNode *resultNode = new CNode("real");
+        resultNode->children.push_back(new CNode(std::to_string(res)));
+        return resultNode;
+      }
     }
     return node->children[0];
   } else if (node->name == "not_factor") {
@@ -204,23 +284,7 @@ CNode *calculate(CNode *node) {
       return node;
     }
 
-    bool real_a = false;
-
-    std::string a = res->children[0]->name;
-
-    if (a == "true") {
-      real_a = true;
-    } else if (res->name == "integer") {
-      int g = std::stoi(a);
-      if (g == 1)
-        real_a = true;
-      else if (g == 0)
-        real_a = false;
-      else {
-        std::cerr << "Cannot convert " << g << " to boolean" << std::endl;
-        exit(1);
-      }
-    }
+    bool real_a = toBoolean(res);
 
     real_a = !real_a;
 
