@@ -87,7 +87,10 @@ bool check_statements(CNode *node) {
     }
     return check_expression(ret_value->children[0]);
   } else if (statement->name == "assignment") {
-    return true; // TODO: implement
+    if (!currentTable->check_modifiable(statement->children[0])){
+      return false;
+    }
+    return processingExpression(statement, 1);
   } else if (statement->name == "routine_call") {
     std::string functionName = statement->children[0]->name;
     return currentTable->checkFunctionCall(functionName,
@@ -97,7 +100,34 @@ bool check_statements(CNode *node) {
   } else if (statement->name == "for_loop") {
     return true; // TODO: implement
   } else if (statement->name == "if_statement") {
-    return true; // TODO: implement
+    if(!processingExpression(statement, 0)){
+      return false;
+    }
+    std::string key = currentTable->addSubScope();
+    if (key.empty())
+    {
+      return false;
+    }
+    currentTable = currentTable->getSubScopeTable(key);
+    if (!check_reachable(statement->children[1])){
+      return false;
+    }
+    currentTable = currentTable->getParent();
+    if (statement->children[2] == nullptr)
+    {
+      return true;
+    }
+    key = currentTable->addSubScope();
+    if (key.empty())
+    {
+      return false;
+    }
+    currentTable = currentTable->getSubScopeTable(key);
+    if (!check_reachable(statement->children[2]->children[0])){
+      return false;
+    }
+    currentTable = currentTable->getParent();
+    return true;
   }
   return false;
 }
