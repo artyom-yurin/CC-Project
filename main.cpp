@@ -1,8 +1,11 @@
 #include "common/Node.hpp"
-#include "lexer/Lexer.hpp"
 #include "grammar/Parser.hpp"
+#include "lexer/Lexer.hpp"
+#include <assert.h>
 #include <fstream>
 #include <iostream>
+#include <semantic_analyzer/CAnalyzer.hpp>
+#include <semantic_analyzer/ControlTable.hpp>
 #include <sstream>
 #include <iterator>
 
@@ -20,41 +23,38 @@ void print_tree(CNode *root) {
 }
 
 int main(int argc, char *argv[]) {
-//  if (argc != 2) {
-//    std::cerr << "Invalid number of args" << std::endl;
-//    std::cerr << "Usage: " << argv[0] << " <path_to_source>" << std::endl;
-//    return 1;
-//  }
-//
-//  std::ifstream src_file(argv[1]);
-//  if (!src_file.is_open())
-//  {
-//    std::cerr << "File don't open" << std::endl;
-//    return 1;
-//  }
-//  std::stringstream buffer;
-//
-//  buffer << src_file.rdbuf();
-//  Lexer *lexer = new Lexer(buffer.str());
-//  CNode* root = nullptr;
-//  yy::parser parser(lexer, (void**)&root);
-//  parser.parse();
-//  if (root == nullptr)
-//    return 1;
-//
-//  print_tree(root);
-    std::string str = argv[1];
-    std::vector<std::string> array;
-    std::istringstream is(argv[1]);
-    std::string s;
-    while (std::getline(is, s, '/')) {
-        array.push_back(s);
-    }
-    std::string fpath = array[2];
-    int dot = fpath.find(".txt");
-    std::string path = fpath.substr(0, dot);
-    std::cout << path;
-//  return 0;
+  if (argc != 2) {
+    std::cerr << "Invalid number of args" << std::endl;
+    std::cerr << "Usage: " << argv[0] << " <path_to_source>" << std::endl;
+    return 1;
+  }
+
+  std::ifstream src_file(argv[1]);
+  if (!src_file.is_open()) {
+    std::cerr << "File don't open" << std::endl;
+    return 1;
+  }
+  std::stringstream buffer;
+
+  buffer << src_file.rdbuf();
+  Lexer *lexer = new Lexer(buffer.str());
+  CNode *root = nullptr;
+  yy::parser parser(lexer, (void **)&root);
+  parser.parse();
+  if (root == nullptr)
+    return 1;
+
+  print_tree(root);
+
+  CAnalayzer analyzer;
+  std::cout << "Check reachable of components\n";
+  if (!analyzer.check_reachable(root)) {
+    std::cerr << "ERROR: see above" << std::endl;
+    return 1;
+  }
+  std::cout << "Everything is correct\n";
+  print_tree(root);
+  return 0;
 }
 
 void translate_expression(CNode *node) {

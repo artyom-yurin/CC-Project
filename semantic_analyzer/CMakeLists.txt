@@ -10,3 +10,12 @@ target_link_libraries(ControlTable
         TypeTable
         common
         )
+
+add_library(Analyzer
+        CAnalyzer.cpp
+        )
+
+target_link_libraries(Analyzer
+        ControlTable
+        common
+        )
