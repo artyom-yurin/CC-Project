@@ -163,6 +163,9 @@ bool CAnalayzer::check_simple_declaration(CNode *node) {
       std::cerr << "Something wrong with CNode " << node->name << std::endl;
       return false;
     }
+    if (!currentTable->processingExpression(dec, 2)){
+      return false;
+    }
     return currentTable->addVariable(dec->children[0]->name, dec->children[1],
                                      dec->children[2]);
   } else if (dec->name == "type_declaration") {

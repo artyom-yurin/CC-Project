@@ -1,7 +1,0 @@
-routine main() is
-    var a: integer
-    var b: integer
-    a := 2
-    b := 3
-    return a + b
-end

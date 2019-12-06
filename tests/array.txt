@@ -1,3 +1,0 @@
-routine main() : integer is
-    var a : array[2 + 5] integer
-end

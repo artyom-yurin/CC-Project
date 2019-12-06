@@ -26,7 +26,7 @@ RecordType::RecordType(const std::vector<std::shared_ptr<VariableNode>> &fields)
 }
 
 std::string RecordType::toStr() const { 
-    std::string result = "Record type\n"; 
+    std::string result = "Record type\n";
     for (int i=0; i < fields.size(); i++) {
         result += fields[i]->toString() + "\n";
     }

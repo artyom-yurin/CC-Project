@@ -1,9 +1,0 @@
-routine main() : integer is
-   var a is 4
-   var b is 2
-   var c is a + b
-   var d is a - b
-   var e is a * b + d
-   var f is a / (a + a)
-   return c
-end
