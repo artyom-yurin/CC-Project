@@ -265,7 +265,6 @@ bool ControlTable::checkFunctionCall(const std::string &functionName,
 
 bool ControlTable::CNode2ArgList(
     CNode *args, std::vector<std::shared_ptr<VariableNode>> &args_list) {
-  // TODO After calculate expression
   return true;
 }
 

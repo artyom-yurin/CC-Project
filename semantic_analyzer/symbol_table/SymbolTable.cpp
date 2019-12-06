@@ -6,7 +6,6 @@ bool SymbolTable::addVariable(const std::string &name,
   if (isVariable(name))
     return false;
 
-  //TODO: Allocate more for fields of record type or write function hasField
   auto variable = std::make_shared<VariableNode>(name, type, expression);
 
   variables_.insert(
