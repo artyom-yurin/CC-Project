@@ -315,7 +315,7 @@ void CGenerator::translate__statements(CNode *node, std::ofstream &output,
     output << "   Go:\n";
     if (statement->children[2] != nullptr){
       scope++;
-      current_ct_ = current_ct_->getSubScopeTable(std::to_string(scope));
+      current_ct_ = current_ct_->getParent()->getSubScopeTable(std::to_string(scope));
       int b = 0;
       translate_CNode(statement->children[2]->children[0], output, b);
     }
