@@ -728,3 +728,20 @@ bool ControlTable::processingExpression(CNode *&parent, int idChild) {
     changeChild(parent->children[idChild], res);
   return true;
 }
+
+int ControlTable::countVariables(bool itself) const{
+    int res = 0;
+    if (!parent_.expired())
+    {
+        res += parent_.lock()->countVariables(true);
+    }
+    res += symbol_table_->getCountVariables();
+    if (itself){
+        return res;
+    }
+    for(const auto& scope: sub_scopes_)
+    {
+        res += scope.second->countVariables(false);
+    }
+    return res;
+}

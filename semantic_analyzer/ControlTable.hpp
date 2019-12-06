@@ -44,6 +44,8 @@ public:
   bool processingExpression(CNode* &parent, int idChild);
 
   bool checkFunctionCall(const std::string& functionName, CNode* arguments);
+
+  int countVariables(bool itself = false) const;
 private:
   std::shared_ptr<FunctionNode> getFunction(const std::string &name);
   std::shared_ptr<VariableNode> getVariable(const std::string &name);

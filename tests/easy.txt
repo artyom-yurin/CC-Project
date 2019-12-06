@@ -1,0 +1,3 @@
+routine m() is
+    return 2 + 3
+end
