@@ -3,6 +3,7 @@
 
 #include "semantic_analyzer/symbol_table/SymbolTable.hpp"
 #include "semantic_analyzer/type_table/TypeTable.hpp"
+#include <generator/IndexTable.hpp>
 #include <memory>
 
 class ControlTable : public std::enable_shared_from_this<ControlTable> {
@@ -46,6 +47,7 @@ public:
   bool checkFunctionCall(const std::string& functionName, CNode* arguments);
 
   int countVariables(bool itself = false) const;
+  GeneratorType getGeneratedType(std::string name);
 private:
   std::shared_ptr<FunctionNode> getFunction(const std::string &name);
   std::shared_ptr<VariableNode> getVariable(const std::string &name);
