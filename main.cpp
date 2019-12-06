@@ -55,7 +55,6 @@ int main(int argc, char *argv[]) {
   }
   std::cout << "Everything is correct\n";
   print_tree(root);
-  auto test = root->children[0]->children[3]->children[0]->children[0]->children[0]->children[0];
   CGenerator generator(analyzer.getOriginalTable());
   generator.generate(root, "Artyom.j");
 //  if (argc != 2) {

@@ -51,27 +51,27 @@ void CGenerator::translate_expression(CNode *node, std::ofstream &output) {
             std::string op = node->children[1]->name;
             if (op == "<") {
                 output << "fcmpg \n ifge L3 \n iconst_1 \n goto L4 \n L3: \n iconst_0  "
-                          "\n L4: \n return"
+                          "\n L4: \n"
                        << "\n";
             } else if (op == "<=") {
                 output << "fcmpg \n ifgt L3 \n iconst_1 \n goto L4 \n L3: \n iconst_0  "
-                          "\n L4: \n return"
+                          "\n L4: \n"
                        << "\n";
             } else if (op == ">") {
                 output << "fcmpl \n ifle L3 \n iconst_1 \n goto L4 \n L3: \n iconst_0  "
-                          "\n L4: \n return"
+                          "\n L4: \n"
                        << "\n";
             } else if (op == ">=") {
                 output << "fcmpl \n iflt L3 \n iconst_1 \n goto L4 \n L3: \n iconst_0  "
-                          "\n L4: \n return"
+                          "\n L4: \n"
                        << "\n";
             } else if (op == "=") {
                 output << "fcmpl \n ifne L3 \n iconst_1 \n goto L4 \n L3: \n iconst_0  "
-                          "\n L4: \n return"
+                          "\n L4: \n"
                        << "\n";
             } else if (op == "/=") {
                 output << "fcmpl \n ifeq L3 \n iconst_1 \n goto L4 \n L3: \n iconst_0  "
-                          "\n L4: \n return"
+                          "\n L4: \n "
                        << "\n";
             }
         }
@@ -150,7 +150,7 @@ void CGenerator::generate(CNode *node, const std::string &filename) {
                ".method public <init>()V\n"
                "   aload_0\n"
                "   invokenonvirtual java/lang/Object/<init>()V\n"
-               "   return\n"
+
                ".end method\n"
                "\n"
                ".method public static main([Ljava/lang/String;)V\n"
@@ -276,7 +276,7 @@ void CGenerator::translate__statements(CNode *node, std::ofstream &output,
 
         CNode* range = statement->children[1];
         translate_expression(range->children[0], output);
-        auto s = current_index_table_->getIndex(statement->children[0]->children[0]->name);
+        auto s = current_index_table_->getIndex(statement->children[0]->name);
         output << "   istore " << s.first << "\n";
         output << "   FOR" << s.first << ":\n";
         output << "   iload " << s.first << "\n";
