@@ -72,7 +72,3 @@ bool SymbolTable::removeVariable(const std::string &name) {
 
   return true;
 }
-
-int SymbolTable::getCountVariables() const{
-    return variables_.size();
-}

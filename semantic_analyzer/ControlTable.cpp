@@ -18,6 +18,53 @@ ControlTable::ControlTable(ControlTable *parent) {
   symbol_table_ = std::make_unique<SymbolTable>();
 }
 
+// std::shared_ptr<TypeNode> CompareTypes(std::shared_ptr<TypeNode> typeNode1,
+//         std::shared_ptr<TypeNode> typeNode2, std:: string operation) {
+//     auto type1 = typeNode1->getType();
+//     auto type2 = typeNode2->getType();
+//
+//     if (type1 != type2) {
+//         return nullptr;
+//     }
+//
+//     if (type1 == Types::Simple) {
+//         std::shared_ptr<SimpleType> left =
+//         std::dynamic_pointer_cast<SimpleType>(typeNode1);
+//         std::shared_ptr<SimpleType> right =
+//         std::dynamic_pointer_cast<SimpleType>(typeNode2); name1 = left->name;
+//         name2 = left->name;
+//         // Check operation
+//         if (operation == "+" || operation == "-" || operation == "*") {
+//             if (name1 == "boolean" and name2 == "boolean") {
+//                 return nullptr;
+//             }
+//             if (name1 == "real")
+//                 return typeNode1;
+//             if (name2 == "real")
+//                 return typeNode2;
+//             if (name1 == "integer" && name2 == "integer")
+//                 return typeNode1;
+//         }
+//         return left;
+//
+//     } else if (type1 == Types::Array) {
+//         std::shared_ptr<ArrayType> left =
+//         std::dynamic_pointer_cast<ArrayType>(typeNode1);
+//         std::shared_ptr<ArrayType> right =
+//         std::dynamic_pointer_cast<ArrayType>(typeNode2); return left;
+//
+//     } else if (type1 == Types::Record) {
+//         std::shared_ptr<RecordType> left =
+//         std::dynamic_pointer_cast<RecordType>(typeNode1);
+//         std::shared_ptr<RecordType> right =
+//         std::dynamic_pointer_cast<RecordType>(typeNode2); return left;
+//
+//     } else if (type1 == Types::NoType) {
+//         return typeNode1;
+//     }
+//     return nullptr;
+// }
+
 std::shared_ptr<TypeNode> ControlTable::CNode2TypeNode(CNode *type) {
   if (type == nullptr)
     return nullptr;
@@ -72,10 +119,14 @@ bool ControlTable::CNode2FieldList(
   return true;
 }
 
-bool ControlTable::addAutoVariable(const std::string &name, CNode *expression) {
+bool ControlTable::addAutoVariable(std::string name, CNode *expression) {
   if (expression == nullptr)
     return false;
-  auto typeNode = std::make_shared<AutoType>();
+  auto typeNode = whatType(expression);
+  if (typeNode == nullptr) {
+    return false;
+  }
+  std::cout << "!"<< typeNode->toStr()<<"!\n";
   return symbol_table_->addVariable(name, typeNode, expression);
 }
 
@@ -219,14 +270,6 @@ bool ControlTable::addType(const std::string &name, CNode *type) {
   return type_table_->addType(name, typeNode);
 }
 
-bool ControlTable::addVariable(std::string name, CNode *type,
-                               CNode *expression) {
-  auto typeNode = CNode2TypeNode(type);
-  if (typeNode == nullptr)
-    return false;
-  return symbol_table_->addVariable(name, typeNode, expression);
-}
-
 bool ControlTable::addType(const std::string &name,
                            std::shared_ptr<TypeNode> type) {
   if (type == nullptr)
@@ -253,7 +296,7 @@ bool ControlTable::checkFunctionCall(const std::string &functionName,
     return true;
   else if (arguments != nullptr && param.size() == arguments->children.size()) {
 
-    std::vector<std::shared_ptr<VariableNode>> arg_list = {};
+    std::vector<CNode *> arg_list = {};
     if (!CNode2ArgList(arguments, arg_list)) {
       return false;
     }
@@ -263,8 +306,12 @@ bool ControlTable::checkFunctionCall(const std::string &functionName,
   return false;
 }
 
-bool ControlTable::CNode2ArgList(
-    CNode *args, std::vector<std::shared_ptr<VariableNode>> &args_list) {
+bool ControlTable::CNode2ArgList(CNode *args, std::vector<CNode *> &args_list){
+  std::cout << args->children[0]->name;
+  for (int i =0; i < args ->children.size(); i++)
+  {
+    processingExpression(args, i);
+  }
   return true;
 }
 
@@ -272,6 +319,23 @@ bool ControlTable::check_modifiable(CNode *node) {
   std::shared_ptr<TypeNode> currentType = nullptr;
   return check_modifiable(node, currentType);
 }
+
+std::shared_ptr<TypeNode> ControlTable::type_modifiable(CNode *node) {
+  std::shared_ptr<TypeNode> currentType = nullptr;
+  if (check_modifiable(node, currentType)) {
+    return currentType;
+  }
+  return nullptr;
+}
+
+bool ControlTable::addVariable(std::string name, CNode *type,
+                               CNode *expression) {
+  auto typeNode = CNode2TypeNode(type);
+  if (typeNode == nullptr)
+    return false;
+  return symbol_table_->addVariable(name, typeNode, expression);
+}
+
 bool ControlTable::check_modifiable(CNode *node,
                                     std::shared_ptr<TypeNode> &currentType) {
   if (node->name == "modifiable_primary") {
@@ -718,6 +782,8 @@ CNode *ControlTable::calculate(CNode *node) {
 }
 
 bool ControlTable::processingExpression(CNode *&parent, int idChild) {
+  if (parent->children[idChild] == nullptr)
+    return true;
   CNode *res = calculate(parent->children[idChild]);
   if (res == nullptr)
     return false;
@@ -726,48 +792,288 @@ bool ControlTable::processingExpression(CNode *&parent, int idChild) {
   return true;
 }
 
-int ControlTable::countVariables(bool itself) const {
-  int res = 0;
-  if (!parent_.expired()) {
-    res += parent_.lock()->countVariables(true);
-  }
-  res += symbol_table_->getCountVariables();
-  if (itself) {
-    return res;
-  }
-  for (const auto &scope : sub_scopes_) {
-    res += scope.second->countVariables(false);
-  }
-  return res;
+bool isNumber(const std::string &s) {
+  return !s.empty() && std::find_if(s.begin(), s.end(), [](char c) {
+                         return !std::isdigit(c);
+                       }) == s.end();
 }
-GeneratorType ControlTable::getGeneratedType(std::string name) {
-  auto variableNode = getVariable(name);
-  if (variableNode == nullptr)
-    return Error;
-  auto typeNode = variableNode->variable_type_;
-  if (typeNode->getType() == Types ::Simple) {
-    std::string typeName =
-        std::dynamic_pointer_cast<SimpleType>(typeNode)->name;
-    if (typeName == "boolean")
-      return Boolean;
-    if (typeName == "integer")
-      return Integer;
-    if (typeName == "real")
-      return Real;
+
+std::shared_ptr<TypeNode>
+ControlTable::CompareTypes(std::shared_ptr<TypeNode> typeNode1,
+                           std::shared_ptr<TypeNode> typeNode2,
+                           std::string operation) {
+  auto type1 = typeNode1->getType();
+  auto type2 = typeNode2->getType();
+
+  if (type1 != type2) {
+    return nullptr;
   }
 
-  if (typeNode->getType() == Types ::Array) {
-    std::string typeName =
-        std::dynamic_pointer_cast<SimpleType>(
-            std::dynamic_pointer_cast<ArrayType>(typeNode)->arrayType)
-            ->name;
-    if (typeName == "boolean")
-      return Arr_Boolean;
-    if (typeName == "integer")
-      return Arr_Integer;
-    if (typeName == "real")
-      return Arr_Real;
-  }
+  if (type1 == Types::Simple) {
+    std::shared_ptr<SimpleType> left =
+        std::dynamic_pointer_cast<SimpleType>(typeNode1);
+    std::shared_ptr<SimpleType> right =
+        std::dynamic_pointer_cast<SimpleType>(typeNode2);
+    std::string name1 = left->name;
+    std::string name2 = right->name;
+    // Check operation
+    if (operation == "+" || operation == "-" || operation == "*") {
+      if (name1 == "boolean" || name2 == "boolean") {
+        std::cout << "Invalid type\n";
+        return nullptr;
+      }
+      if (name1 == "real") {
+        std::cout << "Cast to real\n";
+        return typeNode1;
+      }
+      if (name2 == "real") {
+        std::cout << "Cast to real\n";
+        return typeNode2;
+      }
+      if (name1 == "integer" && name2 == "integer") {
+        std::cout << "Cast to integer\n";
+        return typeNode1;
+      }
+    } else if (operation == "%") {
+      if (name1 == "integer" && name2 == "integer") {
+        std::cout << "Cast to integer\n";
+        return typeNode1;
+      }
+      std::cout << "Invalid type\n";
+      return nullptr;
+    } else if (operation == "/") {
+      if (name1 == "boolean" || name2 == "boolean") {
+        std::cout << "Invalid type\n";
+        return nullptr;
+      }
+      if (name1 == "real") {
+        std::cout << "Cast to real\n";
+        return typeNode1;
+      }
+      if (name2 == "real") {
+        std::cout << "Cast to real\n";
+        return typeNode2;
+      }
+      if (name1 == "integer" && name2 == "integer") {
+        std::cout << "Cast to integer\n";
+        return typeNode1;
+      }
+    } else if (operation == "and" || operation == "or" || operation == "xor" ||
+               operation == "not") {
+      if (name1 == "real" || name2 == "real") {
+        std::cout << "Invalid type\n";
+        return nullptr;
+      }
+      if (name1 == "boolean" && name2 == "integer") {
+        std::cout << "Cast to boolean\n";
+        return typeNode1;
+      }
+      if (name2 == "boolean" && name1 == "integer") {
+        std::cout << "Cast to boolean\n";
+        return typeNode2;
+      }
+      if (name1 == "integer" && name2 == "integer") {
+        std::cout << "Cast to boolean\n";
+        // Create new boolean type Node
+        auto res = getType("boolean");
+        return res;
+      }
+      if (name1 == "boolean" && name2 == "boolean") {
+        std::cout << "Cast to boolean\n";
+        return typeNode1;
+      }
 
-  return Error;
+    } else if (operation == "<" || operation == "<=" || operation == ">" ||
+               operation == ">=" || operation == "=" || operation == "/=") {
+
+      if (name1 == "boolean" || name2 == "boolean") {
+        std::cout << "Invalid type\n";
+        return nullptr;
+      }
+      // Create new boolean type node
+      auto res = getType("boolean");
+      std::cout << "Cast to boolean\n";
+      return res;
+    } else if (operation == ":=") {
+      if (name1 == "boolean") {
+        if (name2 == "real") {
+          std::cout << "Invalid type\n";
+          return nullptr;
+        }
+        if (name2 == "integer" || name2 == "boolean") {
+          std::cout << "Cast to boolean\n";
+          return typeNode1;
+        }
+      }
+      if (name1 == "integer") {
+        std::cout << "Cast to integer\n";
+        return typeNode1;
+      }
+      if (name1 == "real") {
+        std::cout << "Cast to real\n";
+        return typeNode1;
+      }
+    } else if (operation == "EQ") {
+      // std::cout << "NAME1: "<< name1 <<'\n';
+      // std::cout << "NAME2: "<< name2 <<'\n';
+
+      if (name1 != name2) {
+        std::cout << "Types incorrect\n";
+        return nullptr;
+      }
+      std::cout << "Types correct\n";
+      return typeNode1;
+    }
+    return nullptr;
+
+  } else if (type1 == Types::Array) {
+    std::shared_ptr<ArrayType> left =
+        std::dynamic_pointer_cast<ArrayType>(typeNode1);
+    std::shared_ptr<ArrayType> right =
+        std::dynamic_pointer_cast<ArrayType>(typeNode2);
+    if (operation == ":=") {
+
+      CNode *expression1 = left->expression;
+      CNode *expression2 = right->expression;
+
+      std::shared_ptr<TypeNode> res =
+          CompareTypes(left->arrayType, right->arrayType, "EQ");
+      if (res == nullptr) {
+        std::cout << "Types incorrect\n";
+        return nullptr;
+      }
+
+      if (isNumber(expression1->children[0]->name) &&
+          isNumber(expression2->children[0]->name)) {
+        int size1 = stoi(expression1->children[0]->name);
+        int size2 = stoi(expression2->children[0]->name);
+        std::cout << size1 << "\n";
+        std::cout << size2 << "\n";
+
+        if (size1 == size2) {
+          std::cout << "Array can be assigned\n";
+          return typeNode1;
+        }
+        std::cout << "Array cannot be assigned\n";
+        return nullptr;
+      }
+    }
+    return nullptr;
+
+  } else if (type1 == Types::Record) {
+    std::shared_ptr<RecordType> left =
+        std::dynamic_pointer_cast<RecordType>(typeNode1);
+    std::shared_ptr<RecordType> right =
+        std::dynamic_pointer_cast<RecordType>(typeNode2);
+
+    auto r1 = left->fields;
+    auto r2 = right->fields;
+
+    if (r1.size() != r2.size()) {
+      return nullptr;
+    }
+    bool res =
+        std::equal(r1.begin(), r1.end(), r2.begin(), r2.end(),
+                   [this](std::shared_ptr<VariableNode> lhs,
+                          std::shared_ptr<VariableNode> rhs) {
+                     std::shared_ptr<TypeNode> res = CompareTypes(
+                         lhs->variable_type_, rhs->variable_type_, "EQ");
+                     if (res == nullptr) {
+                       return false;
+                     }
+                     return !(lhs->variable_name_ != rhs->variable_name_);
+                   });
+    if (!res) {
+      std::cout << "Record cannot be assigned\n";
+      return nullptr;
+    }
+
+    std::cout << "Record can be assigned\n";
+    return typeNode1;
+
+  } else if (type1 == Types::NoType) {
+    return typeNode1;
+  }
+  return nullptr;
+}
+
+std::shared_ptr<TypeNode> ControlTable::whatType(CNode *node) {
+  std::shared_ptr<TypeNode> result = nullptr;
+  std::shared_ptr<TypeNode> result_left = nullptr;
+  std::shared_ptr<TypeNode> result_right = nullptr;
+
+  std::string operation = "";
+  if (node->name == "expression") {
+    if (node->children.size() == 3) {
+      operation = node->children[1]->name;
+      result_left = whatType(node->children[0]);
+      result_right = whatType(node->children[2]);
+      if (result_left == nullptr && result_right == nullptr) {
+        std::cout << "Not type!\n";
+        return nullptr;
+      }
+      result = CompareTypes(result_left, result_right, operation);
+      return result;
+    }
+    if (node->children.size() == 1) {
+      return whatType(node->children[0]);
+    }
+  } else if (node->name == "relation") {
+    if (node->children.size() == 3) {
+      result_left = whatType(node->children[0]);
+      operation = node->children[1]->name;
+      result_right = whatType(node->children[2]);
+      if (result_left == nullptr && result_right == nullptr) {
+        std::cout << "Not type!\n";
+        return nullptr;
+      }
+      result = CompareTypes(result_left, result_right, operation);
+      return result;
+    }
+    if (node->children.size() == 1) {
+      return whatType(node->children[0]);
+    }
+  } else if (node->name == "simple") {
+    if (node->children.size() == 3) {
+      operation = node->children[1]->name;
+      result_left = whatType(node->children[0]);
+      result_right = whatType(node->children[2]);
+      if (result_left == nullptr && result_right == nullptr) {
+        std::cout << "Not type!\n";
+        return nullptr;
+      }
+      result = CompareTypes(result_left, result_right, operation);
+      return result;
+    }
+    if (node->children.size() == 1) {
+      return whatType(node->children[0]);
+    }
+  } else if (node->name == "factor") {
+    if (node->children.size() == 3) {
+      operation = node->children[1]->name;
+      result_left = whatType(node->children[0]);
+      result_right = whatType(node->children[2]);
+      if (result_left == nullptr && result_right == nullptr) {
+        std::cout << "Not type!\n";
+        return nullptr;
+      }
+      result = CompareTypes(result_left, result_right, operation);
+      return result;
+    }
+    if (node->children.size() == 1) {
+      return whatType(node->children[0]);
+    }
+  } else if (node->name == "summand") {
+    return whatType(node->children[0]);
+  } else if (node->name == "integer" || node->name == "boolean" ||
+             node->name == "real") {
+    std::cout << node->name << '\n';
+    result = getType(node->name);
+    return result;
+  } else if (node->name == "modifiable_primary_array" ||
+             node->name == "modifiable_primary" ||
+             node->name == "modifiable_primary_field") {
+    return type_modifiable(node);
+  }
+  return nullptr;
 }

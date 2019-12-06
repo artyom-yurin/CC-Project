@@ -6,7 +6,7 @@ VariableNode::VariableNode(const std::string &variableName,
                            CNode *Expression) {
   variable_name_ = variableName;
   variable_type_ = variableType;
-  default_value_ = Expression;
+  default_value_ = Expression; // TODO Processing expression
 }
 
 std::string VariableNode::toString() {

@@ -1,10 +1,7 @@
+routine main(x: integer, y: boolean) : integer is
+    return not x
+end
 routine some(m: boolean) : integer is
-    if (1 < 2) then
-        var a: integer
-        a := 2
-        b := a + 2
-     else
-        var b: boolean
-        b := true
-     end
+    var a is 7 + 5
+    var b is a + 4.0 > 5
 end

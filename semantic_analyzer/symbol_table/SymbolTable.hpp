@@ -29,7 +29,6 @@ public:
 
   bool removeVariable(const std::string &name);
 
-  int getCountVariables() const;
 private:
   std::unordered_map<std::string, std::shared_ptr<VariableNode>> variables_;
 

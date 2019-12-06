@@ -258,7 +258,6 @@ primary
     | REAL_LITERAL { $$ = add_node("real", 1, $1);}
     | INTEGER_LITERAL { $$ = add_node("integer", 1, $1);}
     | modifiable_primary { $$ = $1;}
-    | routine_call { $$ = $1;}
     ;
 
 modifiable_primary
