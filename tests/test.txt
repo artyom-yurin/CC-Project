@@ -1,0 +1,16 @@
+type arr is array [10] integer
+routine BubbleSort(input:arr) is
+    var output: arr
+    output := input
+    for i in 1 .. 10-1 loop
+        for j in 1 .. 10-i-1 loop
+            if output[j] > output[j+1] then
+                var temp:integer
+                temp:=output[j]
+                output[j]:=output[j+1]
+                output[j+1]:=temp
+            end
+        end
+    end
+    return output
+end

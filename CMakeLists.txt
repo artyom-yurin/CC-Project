@@ -11,6 +11,7 @@ add_subdirectory(lexer)
 add_subdirectory(common)
 add_subdirectory(grammar)
 add_subdirectory(semantic_analyzer)
+add_subdirectory(generator)
 
 configure_file(test.txt ${CMAKE_BINARY_DIR} COPYONLY)
 
@@ -23,4 +24,5 @@ target_link_libraries(ICompiler
         Lexer
         ControlTable
         Analyzer
+        Generator
         )

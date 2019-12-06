@@ -285,12 +285,11 @@ bool ControlTable::check_modifiable(CNode *node,
       return true;
     } else if (currentType->getType() == Types::Record) {
       auto fields = std::dynamic_pointer_cast<RecordType>(currentType)->fields;
-      auto field =
-          std::find_if(fields.begin(), fields.end(),
-                       [=](const std::shared_ptr<VariableNode> &field) {
-                         return field->variable_name_ ==
-                                node->children[0]->name;
-                       });
+      auto field = std::find_if(
+          fields.begin(), fields.end(),
+          [=](const std::shared_ptr<VariableNode> &field) {
+            return field->variable_name_ == node->children[0]->name;
+          });
       if (field == fields.end()) {
         return false;
       }
@@ -308,11 +307,11 @@ bool ControlTable::check_modifiable(CNode *node,
     return processingExpression(node, 1);
   } else if (node->name == "modifiable_primary_field") {
     if (!check_modifiable(node->children[0], currentType)) {
-        return false;
+      return false;
     }
 
     if (currentType->getType() != Types::Record) {
-        return false;
+      return false;
     }
 
     return check_modifiable(node->children[1], currentType);
@@ -321,7 +320,7 @@ bool ControlTable::check_modifiable(CNode *node,
 }
 
 bool ControlTable::addCounter(const std::string &name) {
-  return addVariable(name,getType("integer"), nullptr);
+  return addVariable(name, getType("integer"), nullptr);
 }
 
 void changeChild(CNode *&src_node, CNode *res_node) {
@@ -386,7 +385,7 @@ double toReal(const CNode *node) {
   std::exit(1);
 }
 
-CNode * ControlTable::calculate(CNode *node) {
+CNode *ControlTable::calculate(CNode *node) {
   CNode *res_node = nullptr;
   if (node->name == "expression") {
     res_node = calculate(node->children[0]);
@@ -711,8 +710,7 @@ CNode * ControlTable::calculate(CNode *node) {
   } else if (node->name == "modifiable_primary" ||
              node->name == "modifiable_primary_array" ||
              node->name == "modifiable_primary_field") {
-    if (!check_modifiable(node))
-    {
+    if (!check_modifiable(node)) {
       return nullptr;
     }
     return node;
@@ -727,4 +725,50 @@ bool ControlTable::processingExpression(CNode *&parent, int idChild) {
   if (res != parent->children[idChild])
     changeChild(parent->children[idChild], res);
   return true;
+}
+
+int ControlTable::countVariables(bool itself) const {
+  int res = 0;
+  if (!parent_.expired()) {
+    res += parent_.lock()->countVariables(true);
+  }
+  res += symbol_table_->getCountVariables();
+  if (itself) {
+    return res;
+  }
+  for (const auto &scope : sub_scopes_) {
+    res += scope.second->countVariables(false);
+  }
+  return res;
+}
+GeneratorType ControlTable::getGeneratedType(std::string name) {
+  auto variableNode = getVariable(name);
+  if (variableNode == nullptr)
+    return Error;
+  auto typeNode = variableNode->variable_type_;
+  if (typeNode->getType() == Types ::Simple) {
+    std::string typeName =
+        std::dynamic_pointer_cast<SimpleType>(typeNode)->name;
+    if (typeName == "boolean")
+      return Boolean;
+    if (typeName == "integer")
+      return Integer;
+    if (typeName == "real")
+      return Real;
+  }
+
+  if (typeNode->getType() == Types ::Array) {
+    std::string typeName =
+        std::dynamic_pointer_cast<SimpleType>(
+            std::dynamic_pointer_cast<ArrayType>(typeNode)->arrayType)
+            ->name;
+    if (typeName == "boolean")
+      return Arr_Boolean;
+    if (typeName == "integer")
+      return Arr_Integer;
+    if (typeName == "real")
+      return Arr_Real;
+  }
+
+  return Error;
 }

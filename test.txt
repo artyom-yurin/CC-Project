@@ -1,7 +1,10 @@
 routine some(m: boolean) : integer is
-    while true loop
-        var a: boolean
-        var b: integer
-        a := b
-    end
+    if (1 < 2) then
+        var a: integer
+        a := 2
+        b := a + 2
+     else
+        var b: boolean
+        b := true
+     end
 end

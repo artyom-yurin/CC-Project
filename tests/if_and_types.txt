@@ -1,0 +1,11 @@
+routine main() : boolean is
+    var a is 4
+    var b : integer is 2
+    var c : real is 2.0
+    var d : boolean is true
+    if ((a > b) = d) then
+        a := a - b
+    else
+        a := a + b
+    end
+end

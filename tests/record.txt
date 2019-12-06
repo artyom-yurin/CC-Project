@@ -1,0 +1,8 @@
+routine main() : integer is
+    var a : record
+        var b : integer is 2
+        var c : record
+            var d : integer is 4
+        end
+    end
+end
