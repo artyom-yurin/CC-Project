@@ -13,7 +13,7 @@ void CGenerator::translate_get_modifiable(CNode *node, std::ofstream &output) {
       output << "   aload " << s.first << "\n";
     } else if (s.second == GeneratorType::Integer ||
                s.second == GeneratorType::Boolean) {
-      output << "   iload " << s.first << "\n";
+      output << "   iload " << s.first + 1 << "\n";
     } else if (s.second == GeneratorType::Real) {
       output << "   fload " << s.first << "\n";
     }
@@ -150,15 +150,9 @@ void CGenerator::generate(CNode *node, const std::string &filename) {
              ".method public <init>()V\n"
              "   aload_0\n"
              "   invokenonvirtual java/lang/Object/<init>()V\n"
-
+             "  return\n"
              ".end method\n"
-             "\n"
-             ".method public static main([Ljava/lang/String;)V\n"
-             "   .limit locals 8\n"
-             "   .limit stack 8\n";
-
-  outfile << "   return\n"
-             ".end method\n\n";
+             "\n";
   // TODO create a file
   // TODO genrate
   int s = 0;
@@ -210,15 +204,17 @@ void CGenerator::translate_routine_declaration(CNode *node,
   CNode *returnType = node->children[2];
 
   output << ".method public static " << functionName << "(";
+  output << "[Ljava/lang/String;";
   output << ")V";  // TODO sad Parameters
   output << "\n"; // TODO Return value
-  output << "   .limit locals " << local_size << "\n"
-         << "   .limit stack " << stack_size << "\n";
+  output << "   .limit locals " << local_size + 2 << "\n"
+         << "   .limit stack " << stack_size + 2 << "\n";
   CNode *body = node->children[3];
   int s = 0;
   translate_CNode(body, output, s);
+  output << "  istore 3\n";
   output << "  getstatic java/lang/System.out Ljava/io/PrintStream;\n"
-            "  swap\n"
+            "  iload 3\n"
             "  invokevirtual java/io/PrintStream.println(I)V\n";
   output << "return\n";
   output << ".end method\n\n";
@@ -239,7 +235,7 @@ void CGenerator::translate__statements(CNode *node, std::ofstream &output,
         statement->children[0]->children[0]->name);
     if (s.second == GeneratorType::Integer ||
         s.second == GeneratorType::Boolean) {
-      output << "  istore " << s.first << "\n";
+      output << "  istore " << s.first + 1 << "\n";
     }
     if (s.second == GeneratorType::Real) {
       output << "  fstore " << s.first << "\n";
@@ -281,9 +277,9 @@ void CGenerator::translate__statements(CNode *node, std::ofstream &output,
     CNode *range = statement->children[1];
     translate_expression(range->children[0], output);
     auto s = current_index_table_->getIndex(statement->children[0]->name);
-    output << "   istore " << s.first << "\n";
+    output << "   istore " << s.first + 1 << "\n";
     output << "   FOR" << s.first << ":\n";
-    output << "   iload " << s.first << "\n";
+    output << "   iload " << s.first + 1 << "\n";
     translate_expression(range->children[1], output);
     output << "   if_icmpge EXIT" << s.first << "\n";
     int d = 0;
