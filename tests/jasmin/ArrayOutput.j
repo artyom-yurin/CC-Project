@@ -19,7 +19,7 @@
    aload 0 ; массив который загружаем
    iconst_0
    aaload
-   invokevirtual java/io/PrintStream.print(Ljava/lang/String;)V
+   invokevirtual java/io/PrintStream.print(Ljava/lang/String;)V ; ИЗМЕНИТЬ ТИП АРГУМЕНТА ПРИ ВЫВОДЕ МАССИВА ДРУГОГО ТИПА
    iconst_1
    istore 1
   L3:
@@ -34,7 +34,7 @@
    aload 0 ; массив который загружаем
    iload 1
    aaload
-   invokevirtual java/io/PrintStream.print(Ljava/lang/String;)V
+   invokevirtual java/io/PrintStream.print(Ljava/lang/String;)V ; ИЗМЕНИТЬ ТИП АРГУМЕНТА ПРИ ВЫВОДЕ МАССИВА ДРУГОГО ТИПА
    iinc 1 1
    goto L3
   L4:
